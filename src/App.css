@@ -1,0 +1,100 @@
+@import './styles/theme.css';
+
+.App {
+  text-align: center;
+  background-color: var(--darling-background);
+  min-height: 100vh;
+  font-family: var(--font-family-base);
+  color: var(--darling-text-primary);
+  padding: var(--spacing-lg);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-xl);
+  background-color: var(--darling-card-bg);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--spacing-xl);
+}
+
+.logo {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--darling-primary);
+}
+
+.policies-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+  padding: var(--spacing-md);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.policy-card {
+  background-color: var(--darling-card-bg);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-normal);
+  border: 2px solid var(--darling-border);
+  cursor: pointer;
+}
+
+.policy-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.policy-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--darling-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.policy-description {
+  color: var(--darling-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.ide-button {
+  background-color: var(--darling-primary);
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  font-family: var(--font-family-base);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.ide-button:hover {
+  background-color: var(--darling-secondary);
+  transform: translateY(-2px);
+}
+
+/* Animation classes */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

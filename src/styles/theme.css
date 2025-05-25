@@ -1,0 +1,36 @@
+:root {
+  /* Colors */
+  --darling-primary: #8B4513;  /* Dark brown */
+  --darling-secondary: #D2691E;  /* Lighter brown */
+  --darling-background: #FFF8E1;  /* Light cream */
+  --darling-card-bg: #FFF5E6;  /* Slightly darker cream for cards */
+  --darling-text-primary: #4A2511;  /* Dark brown text */
+  --darling-text-secondary: #6B4423;  /* Medium brown text */
+  --darling-accent: #FFB74D;  /* Honey accent color */
+  --darling-border: #DEB887;  /* Soft brown border */
+  
+  /* Typography */
+  --font-family-base: 'Poppins', sans-serif;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  
+  /* Border Radius */
+  --border-radius-sm: 0.5rem;
+  --border-radius-md: 1rem;
+  --border-radius-lg: 1.5rem;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 6px 8px rgba(0, 0, 0, 0.1);
+  
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 250ms ease-in-out;
+  --transition-slow: 350ms ease-in-out;
+} 

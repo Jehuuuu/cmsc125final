@@ -1,0 +1,85 @@
+.schedule {
+    min-height: 100vh;
+    background-color: var(--darling-background);
+    padding: var(--spacing-md);
+}
+
+.main-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-xl) var(--spacing-md);
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--darling-primary);
+    margin-bottom: var(--spacing-sm);
+    text-align: center;
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    color: var(--darling-text-secondary);
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.policy-icon {
+    font-size: 2rem;
+    margin-bottom: var(--spacing-md);
+}
+
+.policy-card {
+    text-align: center;
+    padding: var(--spacing-xl);
+}
+
+/* Additional styles for the voice commands */
+.voice-commands {
+    position: fixed;
+    bottom: var(--spacing-lg);
+    right: var(--spacing-lg);
+    background-color: var(--darling-card-bg);
+    padding: var(--spacing-md);
+    border-radius: 50%;
+    box-shadow: var(--shadow-md);
+    border: 2px solid var(--darling-border);
+    cursor: pointer;
+    transition: var(--transition-normal);
+}
+
+.voice-commands:hover {
+    transform: scale(1.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 2rem;
+    }
+
+    .policies-container {
+        grid-template-columns: 1fr;
+    }
+
+    .policy-card {
+        padding: var(--spacing-md);
+    }
+}
+
+/* Animation for staggered card appearance */
+.policy-card {
+    opacity: 0;
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+.policy-card:nth-child(1) { animation-delay: 0.1s; }
+.policy-card:nth-child(2) { animation-delay: 0.2s; }
+.policy-card:nth-child(3) { animation-delay: 0.3s; }
+.policy-card:nth-child(4) { animation-delay: 0.4s; }
+
+/* Remove the background image as we're using a cleaner design */
+.bg-sched {
+    display: none;
+}
