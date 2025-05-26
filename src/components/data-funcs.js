@@ -79,49 +79,6 @@ export const editRow = async (data, table) => {
     }
 }
 
-// Function to delete a row from a table
-export const deleteRow = async (process_id, table) => {
-    try {
-        console.log(`Deleting process ${process_id} from ${table}`);
-        
-        // First, handle memory deallocation for PCB processes
-        if (table === "pcb") {
-            const result = await deallocatePages(process_id.toString());
-            if (result.success) {
-                console.log(`Memory freed for process ${process_id}: ${result.message}`);
-            } else {
-                console.warn(`Failed to free memory for process ${process_id}:`, result.error);
-            }
-        }
-        
-        // Then delete the process record
-        const response = await axios.delete(baseURL + table + "/" + process_id);
-        console.log(`Process ${process_id} deleted from ${table}`);
-        
-        return response.status;
-    } catch (error) {
-        console.error(`Error deleting process ${process_id} from ${table}:`, error);
-        throw error;
-    }
-};
-
-// Function to delete all rows from a table
-export const deleteAllRows = async (table) => {
-    try {
-        // Getting all rows from the table
-        const rows = await getRows(table);
-
-        // Deleting each row from the table
-        rows.forEach(async row => {
-            await deleteRow(row.id, table);
-        });
-
-    } catch (error) {
-        // Logging any errors
-        console.error(error);
-    }
-}
-
 // Function to get the sum of the block sizes in memory
 export function getSum(memory) {
       var sum = 0
@@ -130,14 +87,91 @@ export function getSum(memory) {
       // Returning the sum
       return sum
 }
+export const deleteRow = async (process_id, table) => {
+    try {
+        console.log(`Attempting to delete ${process_id} from ${table}`);
+        
+        // First check if the record exists
+        try {
+            await axios.get(baseURL + table + '/' + process_id);
+        } catch (error) {
+            if (error.response && error.response.status === 404) {
+                console.log(`Record ${process_id} not found in ${table}, skipping deletion`);
+                return 200; // Return success since the record doesn't exist anyway
+            }
+            throw error; // Re-throw if it's a different error
+        }
+        
+        // Handle memory deallocation for PCB processes BEFORE deletion
+        if (table === "pcb") {
+            const deallocationResult = await deallocatePages(process_id.toString());
+            if (deallocationResult.success) {
+                console.log(`Memory freed for process ${process_id}: ${deallocationResult.message}`);
+            } else {
+                console.warn(`Failed to free memory for process ${process_id}:`, deallocationResult.error);
+            }
+        }
+        
+        // Now delete the record
+        const response = await axios.delete(baseURL + table + "/" + process_id);
+        console.log(`Successfully deleted ${process_id} from ${table}`);
+        return response.status;
+        
+    } catch (error) {
+        console.error(`Error deleting process ${process_id} from ${table}:`, error.message);
+        // Don't throw the error to prevent cascading failures
+        return error.response?.status || 500;
+    }
+};
+
+// Enhanced deleteAllRows function with better error handling
+export const deleteAllRows = async (table) => {
+    try {
+        console.log(`Deleting all rows from ${table}`);
+        
+        // Get all rows first
+        const rows = await getRows(table);
+        console.log(`Found ${rows.length} rows to delete from ${table}`);
+        
+        if (rows.length === 0) {
+            console.log(`No rows found in ${table}, nothing to delete`);
+            return;
+        }
+
+        // Delete each row with proper error handling
+        const deletePromises = rows.map(async (row) => {
+            try {
+                await deleteRow(row.id, table);
+            } catch (error) {
+                console.error(`Failed to delete row ${row.id} from ${table}:`, error.message);
+                // Continue with other deletions even if one fails
+            }
+        });
+
+        // Wait for all deletions to complete
+        await Promise.allSettled(deletePromises);
+        console.log(`Finished deleting all rows from ${table}`);
+
+    } catch (error) {
+        console.error(`Error in deleteAllRows for ${table}:`, error.message);
+    }
+};
+
+// Enhanced initializePagedMemory function
 export const initializePagedMemory = async () => {
     try {
-        // Clear existing memory
+        console.log('Initializing paged memory system...');
+        
+        // Clear existing memory records safely
         await deleteAllRows("memory");
         
-        // Create fixed-size pages (e.g., 4 pages of 6 units each for 24 total)
+        // Create fixed-size pages (4 pages of 6 units each for 24 total)
         const PAGE_SIZE = 6;
         const TOTAL_PAGES = 4;
+        
+        console.log(`Creating ${TOTAL_PAGES} pages of ${PAGE_SIZE} units each`);
+        
+        const pageCreationPromises = [];
         
         for (let i = 0; i < TOTAL_PAGES; i++) {
             const page = {
@@ -149,17 +183,70 @@ export const initializePagedMemory = async () => {
                 status: "Free",
                 fragmentation: "None"
             };
-            await addRow(page, "memory");
+            
+            pageCreationPromises.push(addRow(page, "memory"));
         }
         
+        // Wait for all pages to be created
+        await Promise.all(pageCreationPromises);
+        
+        console.log('Paged memory system initialized successfully');
         return { success: true, message: "Paged memory initialized" };
+        
     } catch (error) {
         console.error('Error initializing paged memory:', error);
-        return { success: false, error };
+        return { success: false, error: error.message };
     }
 };
 
-// Allocate pages for a process
+// Enhanced deallocatePages function with better error handling
+export const deallocatePages = async (processId) => {
+    try {
+        console.log(`Deallocating pages for process ${processId}`);
+        
+        const allPages = await getRows("memory");
+        const allocatedPages = allPages.filter(page => 
+            page.process_id && page.process_id.toString() === processId.toString()
+        );
+        
+        console.log(`Found ${allocatedPages.length} pages to deallocate for process ${processId}`);
+        
+        if (allocatedPages.length === 0) {
+            return { 
+                success: true, 
+                freedPages: 0,
+                message: `No pages found for process ${processId}` 
+            };
+        }
+        
+        // Free each allocated page
+        const deallocationPromises = allocatedPages.map(async (page) => {
+            const freedPage = {
+                ...page,
+                process_id: "",
+                allocated_size: 0,
+                status: "Free",
+                fragmentation: "None"
+            };
+            return editRow(freedPage, "memory");
+        });
+        
+        await Promise.all(deallocationPromises);
+        
+        console.log(`Successfully deallocated ${allocatedPages.length} pages for process ${processId}`);
+        
+        return { 
+            success: true, 
+            freedPages: allocatedPages.length,
+            message: `Deallocated ${allocatedPages.length} page(s) from process ${processId}` 
+        };
+    } catch (error) {
+        console.error('Error deallocating pages:', error);
+        return { success: false, error: error.message };
+    }
+};
+
+// Enhanced allocatePages function (unchanged but added for completeness)
 export const allocatePages = async (processId, requiredSize) => {
     try {
         console.log(`Attempting to allocate ${requiredSize} units for process ${processId}`);
@@ -184,6 +271,8 @@ export const allocatePages = async (processId, requiredSize) => {
         const allocatedPageNumbers = [];
         let remainingSize = requiredSize;
         
+        const allocationPromises = [];
+        
         for (let i = 0; i < pagesNeeded && i < freePages.length; i++) {
             const page = freePages[i];
             const allocationSize = Math.min(remainingSize, PAGE_SIZE);
@@ -196,12 +285,14 @@ export const allocatePages = async (processId, requiredSize) => {
                 fragmentation: PAGE_SIZE - allocationSize > 0 ? "Internal" : "None"
             };
             
-            await editRow(updatedPage, "memory");
+            allocationPromises.push(editRow(updatedPage, "memory"));
             allocatedPageNumbers.push(page.page_number);
             remainingSize -= allocationSize;
             
-            console.log(`Allocated page ${page.page_number} (${allocationSize}/${PAGE_SIZE} units) to process ${processId}`);
+            console.log(`Allocating page ${page.page_number} (${allocationSize}/${PAGE_SIZE} units) to process ${processId}`);
         }
+        
+        await Promise.all(allocationPromises);
         
         return { 
             success: true, 
@@ -211,50 +302,6 @@ export const allocatePages = async (processId, requiredSize) => {
         };
     } catch (error) {
         console.error('Error allocating pages:', error);
-        return { success: false, error: error.message };
-    }
-};
-
-// Deallocate pages for a process
-export const deallocatePages = async (processId) => {
-    try {
-        console.log(`Deallocating pages for process ${processId}`);
-        
-        const allPages = await getRows("memory");
-        const allocatedPages = allPages.filter(page => 
-            page.process_id && page.process_id.toString() === processId.toString()
-        );
-        
-        console.log(`Found ${allocatedPages.length} pages to deallocate for process ${processId}`);
-        
-        if (allocatedPages.length === 0) {
-            return { 
-                success: true, 
-                freedPages: 0,
-                message: `No pages found for process ${processId}` 
-            };
-        }
-        
-        // Free each allocated page
-        for (const page of allocatedPages) {
-            const freedPage = {
-                ...page,
-                process_id: "",
-                allocated_size: 0,
-                status: "Free",
-                fragmentation: "None"
-            };
-            await editRow(freedPage, "memory");
-            console.log(`Freed page ${page.page_number} for process ${processId}`);
-        }
-        
-        return { 
-            success: true, 
-            freedPages: allocatedPages.length,
-            message: `Deallocated ${allocatedPages.length} page(s) from process ${processId}` 
-        };
-    } catch (error) {
-        console.error('Error deallocating pages:', error);
         return { success: false, error: error.message };
     }
 };
