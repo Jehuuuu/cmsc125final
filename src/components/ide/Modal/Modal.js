@@ -13,33 +13,33 @@ const Modal = ({ isOpen, onClose, headerText, content, inputField, buttonText1, 
     return (
         <>
             {/* this div overlays the background for blurry effect when the modal is opened*/}
-            <div className='modal-backdrop' onClick={onClose}></div>
+            <div className='custom-modal-backdrop' onClick={onClose}>
+                {/* the overall modal container - moved inside backdrop */}
+                <div className='custom-modal' onClick={(e) => e.stopPropagation()}>
 
-            {/* the overall modal container */}
-            <div className='modal'>
+                    {/* this is the container for the content of the modal */}
+                    <div className='modal-cont'>
 
-                {/* this is the container for the content of the modal */}
-                <div className='modal-cont'>
-
-                    {/* this is the container for the header of the modal */}
-                    <div className='modal-header'>
-                        <h2 className='modal-header'>{headerText}</h2>
-                    </div>
-
-                    {/* this is the container for the body of the modal which contains the content */}
-                    <div className='modal-body'>
-                        {content}
-                    
-                        {/* this is the container specific for save as file because there is a need for file name input */}
-                        <div className='modal-body-input'>
-                            {inputField}
+                        {/* this is the container for the header of the modal */}
+                        <div className='modal-header'>
+                            <h2 className='modal-header'>{headerText}</h2>
                         </div>
-                    </div>
 
-                    {/* this is the container for the buttons of the modal both the cancel and confirm buttons */}
-                    <div className='modal-btn'>
-                        <button className='modal-cancel' onClick={onCancel}>{buttonText1}</button>
-                        <button className='modal-submit' onClick={onConfirm}>{buttonText2}</button>
+                        {/* this is the container for the body of the modal which contains the content */}
+                        <div className='modal-body'>
+                            {content}
+                        
+                            {/* this is the container specific for save as file because there is a need for file name input */}
+                            <div className='modal-body-input'>
+                                {inputField}
+                            </div>
+                        </div>
+
+                        {/* this is the container for the buttons of the modal both the cancel and confirm buttons */}
+                        <div className='modal-btn'>
+                            <button className='modal-cancel' onClick={onCancel}>{buttonText1}</button>
+                            <button className='modal-submit' onClick={onConfirm}>{buttonText2}</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -48,4 +48,4 @@ const Modal = ({ isOpen, onClose, headerText, content, inputField, buttonText1, 
 }
 
 // this is required so that the Modal component can be used to the files that need it
-export default Modal 
+export default Modal
