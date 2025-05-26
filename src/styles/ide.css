@@ -1,3 +1,14 @@
+html {
+  overflow-x: hidden;
+}
+
+html, body {
+  margin: 0;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
 :root {
   --beige-1: #FEFAE0;
   --beige-2: #ECD9B9;
@@ -14,42 +25,198 @@
 
 .ide-container {
   background-color: var(--brown-1);
-  padding: 20px;
+  padding: 0;
   font-family: "Poppins", sans-serif;
   display: grid;
   grid-template-columns: 1fr 3fr;
   grid-gap: 10px;
   height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+  transform-origin: top left;
+}
+
+/* Zoom-specific styles */
+.ide-container.zoomed {
+  width: calc(100vw / var(--zoom-scale));
+  height: calc(100vh / var(--zoom-scale));
+  min-height: calc(100vh / var(--zoom-scale));
+  overflow: visible;
+}
+
+/* Left component scaling improvements */
+.ide-container.zoomed .ide-left-component {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh / var(--zoom-scale));
+  min-height: calc(100vh / var(--zoom-scale));
+  overflow: visible;
+}
+
+.ide-container.zoomed .ide-logo {
+  height: calc(70px * 1.05);
+  margin-bottom: 10px;
+}
+
+.ide-container.zoomed .guide {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: calc((100vh - 100px) / var(--zoom-scale));
+  min-height: calc((100vh - 100px) / var(--zoom-scale));
+  max-height: none;
   overflow: hidden;
 }
 
+.ide-container.zoomed .guide-header {
+  margin-bottom: 12px;
+}
+
+.ide-container.zoomed .guide-content {
+  flex: 1;
+  overflow-y: auto;
+  height: auto;
+  max-height: none;
+  padding-bottom: 20px;
+}
+
+/* Right component scaling improvements */
+.ide-container.zoomed .ide-right-component {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh / var(--zoom-scale));
+}
+
+/* Make editor content fill available space when zoomed */
+.ide-container.zoomed .editor-cont,
+.ide-container.zoomed .editor-wrapper,
+.ide-container.zoomed .editor-container {
+  height: 100%;
+  min-height: calc((100vh - 150px) / var(--zoom-scale));
+  display: flex;
+  flex-direction: column;
+}
+
+.ide-container.zoomed .editor-container .ProseMirror {
+  flex: 1 1 auto;
+  min-height: calc((100vh - 200px) / var(--zoom-scale));
+  height: auto;
+  overflow-y: auto;
+}
+
+.ide-container.zoomed .content-container {
+  height: calc((100vh - 110px) / var(--zoom-scale));
+  max-height: none;
+}
+
+.ide-container.zoomed .tabcont-container {
+  height: calc(100% - 5px);
+  min-height: calc((100vh - 120px) / var(--zoom-scale));
+  display: flex;
+  flex-direction: column;
+}
+
+#zoom-indicator {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--beige-1);
+  color: var(--brown-3);
+  padding: 8px 12px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  font-size: 14px;
+  font-family: 'Poppins', sans-serif;
+  z-index: 9999;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
 .ide-left-component {
-  height: calc(100vh - 40px);
+  height: 100vh;
   display: grid;
-  grid-template-rows: 1fr 99fr;
+  grid-template-rows: auto 1fr;
   gap: 10px;
+  padding: 10px;
+  padding-bottom: 20px;
+  overflow: hidden;
 }
 
 .ide-right-component {
-  height: calc(100vh - 40px);
+  height: 100vh;
   display: grid;
-  grid-template-rows: 4fr 0fr;
+  grid-template-rows: 1fr;
+  padding: 10px 5px 10px 10px;
+  overflow: hidden;
+}
+
+.controls-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 10px 15px 0 0;
+  box-sizing: border-box;
+}
+
+.content-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  height: calc(100vh - 180px);
+  overflow: hidden;
+  padding: 0 15px 10px 0;
+  box-sizing: border-box;
 }
 
 /* left components */
 
 .ide-logo {
   height: 70px;
+  display: block;
+  margin: 0 auto;
+  transition: transform 0.2s ease;
+}
+
+/* Logo container styles for clickable behavior */
+.logo-container {
+  cursor: pointer;
+  display: inline-block;
+  margin: 0 auto;
+  text-align: center;
+  width: 100%;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.logo-container:hover .ide-logo {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+.logo-container:focus {
+  outline: 2px solid var(--brown-3);
+  border-radius: 5px;
+}
+
+.logo-container:active .ide-logo {
+  transform: scale(0.95);
 }
 
 .guide {
   background-color: var(--beige-1);
   padding: 20px;
+  padding-bottom: 40px;
   border-radius: 10px;
   color: var(--brown-3);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  height: calc(100% - 20px);
+  max-height: calc(100vh - 100px);
+  margin-bottom: 20px;
 }
 
 .guide-header {
@@ -64,6 +231,8 @@
   overflow-y: auto;
   padding-right: 15px;
   padding-left: 5px;
+  padding-bottom: 40px;
+  max-height: calc(100vh - 220px);
 }
 
 .note {
@@ -71,54 +240,79 @@
 }
 
 /* Text Editor */
-.ProseMirror,
-.container {
+.editor-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: var(--beige-1);
+  border-radius: 0 0 10px 10px;
+  overflow: hidden;
+  padding-bottom: 5px;
+}
+
+.editor-container .ProseMirror {
+  flex: 1;
+  height: 100%;
+  overflow-y: auto;
+  padding: 15px 20px 30px;
+  outline: none;
   background-color: var(--beige-1);
   color: var(--brown-3);
-  border-radius: 10px;
-  padding: 10px 20px;
+  margin-bottom: 5px;
 }
 
-.editor-cont {
-  position: relative;
-  display: grid;
-  grid-template-rows: 220px calc(100dvh - 40px - 157px - 30px - 52px);
-}
-
-div:has(> .ProseMirror) {
-  display: grid;
-  grid-template-rows: 1fr;
-}
-
-.editor-cont .tiptap.ProseMirror {
-  height: calc(100dvh - 40px - 157px - 30px - 52px);
-  overflow-y: auto;
-  border-radius: 0 0 10px 10px;
-}
-
-.text-editor-blob {
-  height: calc(5 * 715px / 12);
-  width: calc(5 * 920px / 12);
-  z-index: 99;
-  position: absolute;
-  left: 30%;
-  top: 35%;
-}
-
-.ProseMirror:focus-visible {
-  outline: 0;
-}
-
-.tiptap.ProseMirror p {
+/* Remove the standalone ProseMirror class */
+.editor-container .tiptap.ProseMirror p {
   line-height: 1;
 }
 
-.tiptap p.is-editor-empty:first-child::before {
+.editor-container .tiptap p.is-editor-empty:first-child::before {
   color: var(--gray-text);
   content: attr(data-placeholder);
   float: left;
   height: 0;
   pointer-events: none;
+}
+
+.editor-container .tiptap.ProseMirror:focus-visible {
+  outline: 0;
+}
+
+.welcome-image-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 90;
+}
+
+.text-editor-blob {
+  max-height: 300px;
+  max-width: 80%;
+  width: auto;
+  height: auto;
+  z-index: 99;
+  position: relative;
+  object-fit: contain;
+  opacity: 0.9;
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 0.9;
+    transform: scale(1);
+  }
 }
 
 /* Voice Commands */
@@ -227,165 +421,439 @@ div:has(> .ProseMirror) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-evenly;
+  justify-content: center;
   background-color: transparent;
   border: none;
-  margin: 4px;
+  margin: 0 4px;
+  padding: 8px 10px;
+  height: 85%;
   color: var(--brown-3);
+  border-radius: 5px;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 5;
 }
 
 .menubar-button:disabled {
   color: var(--brown-3-fade);
+  cursor: not-allowed;
 }
 
-.menubar-button:hover {
-  filter: brightness(0.1);
+.menubar-button:not(:disabled):hover {
+  background-color: var(--beige-2);
+  filter: brightness(0.95);
 }
 
-.menubar-container {
-  display: flex;
-  flex-direction: row;
-  height: 50px;
-  margin-bottom: 10px;
+/* Remove hover styles for disabled buttons */
+.menubar-button:disabled:hover {
+  background-color: transparent;
+  filter: none;
 }
 
+.menubar-container,
 .toolbar-container {
   display: flex;
   flex-direction: row;
-  height: 50px;
+  align-items: center;
+  height: 70px;
   margin-bottom: 10px;
-  border-radius: 10px;
+  padding: 0 10px;
+  width: 100%;
+  background-color: var(--beige-1);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+/* Fix for container class */
+.container.toolbar-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.menubar-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.menubar-group-primary {
+  flex: 0 0 auto;
+  padding-left: 8px;
+}
+
+.menubar-group:last-child {
+  padding-right: 8px;
+}
+
+.menubar-group-secondary {
+  flex: 0 0 auto;
+}
+
+.menubar-group-zoom {
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .menubar-button-label {
   font-family: "Poppins", sans-serif !important;
-  padding-top: 3px;
-  font-size: 1em;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+.menubar-button-icon {
+  font-size: 1.4rem;
+  margin-bottom: 4px;
 }
 
 .vertical-division {
   border-left: 3px solid var(--brown-3);
-  height: 100%;
+  height: 70%;
   margin-left: 10px;
   margin-right: 10px;
+  opacity: 0.5;
 }
 
-/* TAB CSS */
-
-.tab-container-active,
-.tab-container-inactive {
-  height: 50px;
-  display: grid;
-  grid-template-columns: 6fr 1fr;
+/* Chrome-like TAB CSS */
+.tabcont-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: calc(100% - 15px);
+  border-radius: 10px 10px 10px 10px;
+  overflow: hidden;
+  padding-bottom: 15px;
+  box-sizing: border-box;
 }
 
-.tab-container-active {
-  color: var(--brown-3) !important;
-  border-bottom: 5px solid var(--brown-3);
+.tabs-container {
+  display: flex;
+  position: relative;
+  width: 100%;
+  background-color: var(--beige-1);
+  border-radius: 10px 10px 0 0;
+  padding-top: 8px;
+  height: 42px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
-.tab-container-inactive {
-  color: var(--gray-text) !important;
-  border-bottom: 5px solid var(--gray);
+.chrome-tabs-area {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 42px;
+  width: 100%;
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 10px;
+  scrollbar-width: thin;
 }
 
+.chrome-tabs-area::-webkit-scrollbar {
+  height: 3px;
+}
+
+.chrome-tabs-area::-webkit-scrollbar-thumb {
+  background-color: var(--brown-2);
+  border-radius: 3px;
+}
+
+/* Dynamic Tab Styles - base styles for all tabs */
+.dynamic-tab {
+  height: 42px;
+  position: relative;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0 2px;
+  overflow: hidden;
+}
+
+.dynamic-tab-active {
+  background-color: var(--beige-1);
+  transform: translateY(-2px);
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 3;
+}
+
+.dynamic-tab-inactive {
+  background-color: var(--beige-3);
+  opacity: 0.85;
+}
+
+.dynamic-tab-inactive:hover {
+  opacity: 0.95;
+  transform: none !important;
+  background-color: var(--beige-2);
+}
+
+/* Icon-only tab styles */
+.icon-only-tab {
+  width: 42px;
+  justify-content: center;
+}
+
+.icon-only-tab.dynamic-tab-active {
+  transform: translateY(-2px) scale(1.1);
+}
+
+/* Text tab styles */
+.text-tab {
+  padding: 0 8px 0 12px;
+  justify-content: flex-start;
+}
+
+/* Tab icon container */
+.tab-icon-cont {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brown-3);
+  margin-right: 8px;
+}
+
+.text-tab .tab-icon-cont {
+  font-size: 0.9em;
+}
+
+.icon-only-tab .tab-icon-cont {
+  margin-right: 0;
+  font-size: 1.2em;
+}
+
+.dynamic-tab-active .tab-icon-cont {
+  color: var(--brown-3);
+}
+
+.dynamic-tab-inactive .tab-icon-cont {
+  color: var(--brown-3-fade);
+}
+
+.tab-unsaved-dot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--brown-1);
+  border: 1px solid var(--brown-3);
+}
+
+/* Tab name container */
+.tab-name-cont {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.tab-name {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--brown-3);
+}
+
+.dynamic-tab-inactive .tab-name {
+  color: var(--brown-3-fade);
+}
+
+.dynamic-tab-active .tab-name {
+  font-weight: 600;
+}
+
+.tab-input-edit {
+  width: 90%;
+  padding: 3px;
+  border: 1px solid var(--brown-2);
+  border-radius: 4px;
+  outline: none;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+}
+
+/* Close button styling */
 .tab-close-cont {
   display: flex;
   align-items: center;
-  height: 50px;
-  flex-direction: column;
-  padding:10%;
-  justify-content: space-evenly;
+  justify-content: center;
+  margin-left: 4px;
+  z-index: 2;
 }
 
-.tab-add-cont{
-  display: flex;
-  align-items: center;
-  height: 50px;
-  flex-direction: column;
-  margin-left: 10px;
-  justify-content: space-evenly;
+.icon-only-tab .tab-close-cont {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  opacity: 0;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  background-color: rgba(221, 187, 153, 0.7);
+  transition: opacity 0.15s ease;
+}
+
+.icon-only-tab:hover .tab-close-cont {
+  opacity: 0.9;
+}
+
+.text-tab .tab-close-cont {
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.text-tab:hover .tab-close-cont {
+  opacity: 1;
+}
+
+.dynamic-tab-active .tab-close-cont {
+  opacity: 0.8;
+}
+
+.dynamic-tab-active:hover .tab-close-cont {
+  opacity: 1;
 }
 
 .tab-close {
   cursor: pointer;
-  border-radius: 20px;
+  font-size: 12px !important;
+  color: var(--brown-3);
+  padding: 0;
+  transition: transform 0.2s ease;
 }
 
 .tab-close:hover {
-  background-color: var(--beige-2);
+  transform: scale(1.2);
 }
 
-.tab-close-label {
-  font-size: small;
-}
-
-.tab-add-label{
-  font-size: small;
-}
-
-.tab-name-cont {
-  padding: 5%;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  flex-direction: column;
-  margin-left: 10px;
-}
-
-.tab-name-cont input {
-  font-family: 'Poppins', sans-serif;
-  background-color: transparent;
-  border: none;
-  outline: none;
-  min-width: fit-content;
-  color: var(--brown-3);
-  padding: 0;
-}
-
-.tab-container-inactive input {
-  color: var(--gray-text)
-}
-
-.tabcont-container {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  border-radius: 10px 10px 0 0;
+/* Tab edit overlay */
+.tab-edit-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 150px;
+  height: 100%;
   background-color: var(--beige-1);
-  height: 60px;
-  width: calc((3/4) * (100dvw - 40px));
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-
-.tabcont-container::-webkit-scrollbar {
-  display: none;
-}
-
-.tab-name-input-readonly {
-  background-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 6px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
 .tab-name-error {
+  position: absolute;
+  bottom: -16px;
   color: red;
-  font-size: x-small;
-  margin: 0;
-  width: 100%;
+  font-size: 10px;
 }
 
-.italicize {
-  font-style: italic;
+/* Tab add button */
+.tab-add-cont {
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
 .add-icon {
   cursor: pointer;
-  border-radius: 20px;
-  margin: 0 10px;
+  border-radius: 50%;
+  padding: 2px;
+  transition: all 0.2s ease;
+  color: var(--brown-3);
 }
 
 .add-icon:hover {
   background-color: var(--beige-2);
+  transform: scale(1.2);
+}
+
+/* Tooltip styling */
+.MuiTooltip-tooltip {
+  font-family: 'Poppins', sans-serif !important;
+  font-size: 12px !important;
+  background-color: var(--brown-3) !important;
+  padding: 5px 10px !important;
+}
+
+.MuiTooltip-arrow {
+  color: var(--brown-3) !important;
+}
+
+/* Editor wrapper */
+.editor-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: calc(100% - 42px);
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+
+/* Additional zoom responsiveness for editor area */
+.ide-container.zoomed .tabcont-container {
+  height: calc(100% - 5px);
+  min-height: calc((100vh - 120px) / var(--zoom-scale));
+  display: flex;
+  flex-direction: column;
+}
+
+.ide-container.zoomed .guide {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: calc((100vh - 100px) / var(--zoom-scale));
+  min-height: calc((100vh - 100px) / var(--zoom-scale));
+  max-height: calc((100vh - 100px) / var(--zoom-scale));
+  overflow: hidden;
+}
+
+.ide-container.zoomed .guide-header {
+  margin-bottom: 12px;
+}
+
+.ide-container.zoomed .guide-content {
+  flex: 1;
+  overflow-y: auto;
+  height: auto;
+  max-height: none;
+  padding-bottom: 20px;
+}
+
+.ide-container.zoomed .ide-right-component {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh / var(--zoom-scale));
+}
+
+/* Hide old tab classes */
+.chrome-tab,
+.tab-container-active,
+.tab-container-inactive,
+.tabs-area,
+.chrome-tab-icon-only,
+.chrome-tab-add,
+.icon-tab,
+.icon-tab-active,
+.icon-tab-inactive {
+  display: none;
 }
 
 @media (max-width: 1200px) {
@@ -399,6 +867,32 @@ div:has(> .ProseMirror) {
     max-width: 80%;
     padding: 10px;
   }
+  .menubar-container {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 8px 20px;
+    min-height: 70px;
+  }
+  
+  .menubar-group {
+    margin: 5px 0;
+  }
+  
+  .menubar-button {
+    margin: 0 3px;
+    padding: 6px 8px;
+  }
+  
+  .menubar-button-label {
+    font-size: 0.8em;
+  }
+  
+  .toolbar-container {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 8px 20px;
+    min-height: 70px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -406,4 +900,416 @@ div:has(> .ProseMirror) {
     max-width: 100%;
     padding: 5px;
   }
+}
+
+.editor-cont {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+  width: 100%;
+}
+
+/* Fix for zoomed container to fill screen better */
+/* Removing these duplicate media queries as they are now consolidated above
+@media (max-height: 768px) {
+  .ide-container.zoomed .editor-container .ProseMirror {
+    min-height: calc((100vh - 180px) / var(--zoom-scale));
+  }
+}
+
+@media (max-height: 600px) {
+  .ide-container.zoomed .editor-container .ProseMirror {
+    min-height: calc((100vh - 150px) / var(--zoom-scale));
+  }
+} */
+
+/* Media queries for the left component at different screen sizes */
+@media (max-height: 768px) {
+  .ide-container.zoomed .guide {
+    height: calc((100vh - 90px) / var(--zoom-scale));
+  }
+  
+  .ide-container.zoomed .editor-container .ProseMirror {
+    min-height: calc((100vh - 180px) / var(--zoom-scale));
+  }
+}
+
+@media (max-height: 600px) {
+  .ide-container.zoomed .guide {
+    height: calc((100vh - 80px) / var(--zoom-scale));
+  }
+  
+  .ide-container.zoomed .editor-container .ProseMirror {
+    min-height: calc((100vh - 150px) / var(--zoom-scale));
+  }
+}
+
+/* Menubar responsiveness for zoom */
+.ide-container.zoomed .menubar-container {
+  flex-wrap: wrap;
+  height: auto;
+  min-height: 70px;
+  max-width: calc(100vw / var(--zoom-scale) - 20px);
+  margin-right: 20px;
+  overflow: visible;
+}
+
+.ide-container.zoomed .menubar-group {
+  flex-wrap: wrap;
+  margin: 5px 0;
+}
+
+.ide-container.zoomed .vertical-division {
+  display: none;
+}
+
+/* Make the toolbar responsive as well */
+.ide-container.zoomed .toolbar-container {
+  flex-wrap: wrap;
+  height: auto;
+  min-height: 60px;
+  max-width: calc(100vw / var(--zoom-scale) - 20px);
+  margin-right: 20px;
+}
+
+/* Responsive button layout at different zoom levels */
+@media (max-width: 1200px), (min-width: 100vw) {
+  .ide-container.zoomed .menubar-button {
+    padding: 6px 8px;
+    margin: 2px;
+  }
+  
+  .ide-container.zoomed .menubar-button-icon {
+    font-size: 1.2rem;
+    margin-bottom: 2px;
+  }
+  
+  .ide-container.zoomed .menubar-button-label {
+    font-size: 0.8em;
+  }
+}
+
+/* Specific styles for zoomed-in mode */
+.ide-container.zoomed-in .menubar-container {
+  flex-wrap: wrap;
+  height: auto;
+  min-height: 70px;
+  max-width: calc(100vw / var(--zoom-scale) - 20px);
+  justify-content: center;
+}
+
+.ide-container.zoomed-in .menubar-group {
+  flex: 0 1 auto;
+  justify-content: center;
+  margin: 4px;
+}
+
+.ide-container.zoomed-in .menubar-group-zoom {
+  margin-left: 0;
+}
+
+.ide-container.zoomed-in .menubar-button {
+  flex: 0 0 auto;
+  padding: 6px 8px;
+  margin: 2px;
+}
+
+.ide-container.zoomed-in .toolbar-container {
+  flex-wrap: wrap;
+  height: auto;
+  min-height: 60px;
+  max-width: calc(100vw / var(--zoom-scale) - 20px);
+  justify-content: center;
+}
+
+/* Adjust tab spacing in zoomed-in mode */
+.ide-container.zoomed-in .chrome-tabs-area {
+  padding: 0 5px;
+}
+
+/* Tab container fixes for zoom */
+.ide-container.zoomed .tabs-container {
+  height: auto;
+  min-height: 42px;
+  padding-top: 6px;
+  margin-bottom: 1px;
+}
+
+.ide-container.zoomed .chrome-tabs-area {
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
+  height: auto;
+  min-height: 42px;
+  padding: 0 5px;
+  scrollbar-width: thin;
+  scroll-behavior: smooth;
+}
+
+.ide-container.zoomed .dynamic-tab {
+  flex: 0 0 auto;
+  min-width: 100px;
+  max-width: 200px;
+  transform: none !important;
+  margin: 0 2px;
+  height: 36px;
+}
+
+.ide-container.zoomed .dynamic-tab-active {
+  background-color: var(--beige-1);
+  border-bottom: none;
+  position: relative;
+  z-index: 5;
+}
+
+.ide-container.zoomed .dynamic-tab-active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--beige-1);
+  z-index: 6;
+}
+
+.ide-container.zoomed .icon-only-tab {
+  width: 36px;
+  min-width: 36px;
+}
+
+.ide-container.zoomed .tab-close {
+  opacity: 0.7;
+  font-size: 11px !important;
+}
+
+.ide-container.zoomed .tab-close:hover {
+  opacity: 1;
+}
+
+.ide-container.zoomed .tab-close-cont {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 16px;
+  width: 16px;
+}
+
+.ide-container.zoomed .tab-name {
+  max-width: 120px;
+  font-size: 0.8rem;
+}
+
+/* Adjust tabs based on zoom level */
+.ide-container.zoomed-in .chrome-tabs-area {
+  gap: 3px;
+}
+
+.ide-container.zoomed-in .dynamic-tab {
+  min-width: 120px;
+}
+
+.ide-container.zoomed-in .icon-only-tab {
+  width: 42px;
+  min-width: 42px;
+}
+
+.ide-container.zoomed-out .dynamic-tab {
+  min-width: 90px;
+  height: 34px;
+}
+
+.ide-container.zoomed-out .icon-only-tab {
+  width: 34px;
+  min-width: 34px;
+}
+
+.ide-container.zoomed-out .tab-icon-cont {
+  transform: scale(0.9);
+}
+
+/* Fix tab area scrolling and layout */
+.ide-container.zoomed .tabcont-container {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ide-container.zoomed .chrome-tabs-area::-webkit-scrollbar {
+  height: 2px;
+}
+
+.ide-container.zoomed .chrome-tabs-area::-webkit-scrollbar-thumb {
+  background-color: var(--brown-2);
+  border-radius: 2px;
+}
+
+/* Fix tab add button positioning */
+.ide-container.zoomed .tab-add-cont {
+  margin-left: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  height: 36px;
+  width: 36px;
+}
+
+.ide-container.zoomed .add-icon {
+  font-size: 1.1rem;
+}
+
+/* Fix tab editing mode */
+.ide-container.zoomed .tab-edit-overlay {
+  max-width: 150px;
+  height: 36px;
+}
+
+.ide-container.zoomed .tab-input-edit {
+  width: 85%;
+  padding: 2px;
+  font-size: 11px;
+}
+
+/* Fix tab transition animations */
+.ide-container.zoomed .dynamic-tab {
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.ide-container.zoomed .tab-name-cont {
+  max-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Tab wrapper must have exact height */
+.ide-container.zoomed .editor-wrapper {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* Improve tab interaction */
+.ide-container.zoomed .dynamic-tab-inactive:hover {
+  opacity: 0.95;
+  transform: none !important;
+  background-color: var(--beige-2);
+}
+
+.ide-container.zoomed .dynamic-tab-active {
+  transform: none !important;
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Fix close button positioning and interactions */
+.ide-container.zoomed .icon-only-tab .tab-close-cont {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  opacity: 0;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  background-color: rgba(221, 187, 153, 0.7);
+  transition: opacity 0.15s ease;
+}
+
+.ide-container.zoomed .icon-only-tab:hover .tab-close-cont {
+  opacity: 0.9;
+}
+
+.ide-container.zoomed .icon-only-tab .tab-close {
+  font-size: 10px !important;
+}
+
+/* Ensure no tab overlapping */
+.ide-container.zoomed .chrome-tabs-area {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 2px;
+}
+
+/* Fix tab unsaved indicator */
+.ide-container.zoomed .tab-unsaved-dot {
+  width: 5px;
+  height: 5px;
+  top: -1px;
+  right: -1px;
+}
+
+/* Ensure tooltips appear above tabs */
+.MuiTooltip-popper {
+  z-index: 10000 !important;
+}
+
+/* Fix editor container alignment with tabs */
+.ide-container.zoomed .editor-container {
+  border-radius: 0 0 10px 10px;
+  border-top: none;
+  margin-top: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.ide-container.zoomed.zoomed-in .tabs-container {
+  padding-top: 8px;
+}
+
+.ide-container.zoomed.zoomed-out .tabs-container {
+  padding-top: 5px;
+}
+
+/* Create a consistent visual connection between tabs and editor */
+.ide-container.zoomed .tabs-container::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: var(--beige-2);
+  z-index: 1;
+}
+
+.ide-container.zoomed .tab-add-cont {
+  position: relative;
+  z-index: 2;
+}
+
+/* Ensure proper tab spacing at different zoom levels */
+@media (max-width: 1200px) {
+  .ide-container.zoomed .tab-name {
+    max-width: 100px;
+  }
+  
+  .ide-container.zoomed .dynamic-tab {
+    min-width: 90px;
+  }
+}
+
+@media (max-width: 900px) {
+  .ide-container.zoomed .tab-name {
+    max-width: 80px;
+  }
+  
+  .ide-container.zoomed .dynamic-tab {
+    min-width: 80px;
+  }
+}
+
+/* Fix for Redo button */
+#MENU-REDO {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+#MENU-REDO:disabled {
+  pointer-events: none;
+  cursor: not-allowed;
 } 

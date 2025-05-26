@@ -378,8 +378,7 @@ function handleTabDeletion(indexToDelete) {
   }
 
   return (
-  // Create a container for the header, which includes the menubar, Toolbar, and the Tabbar
-  <div style={{ width: '100%' }}>
+    <div className="controls-container">
       {/* Pass to the Menubar the onTabAdd, onTabSave, enableSaveAs, and unsavedChanges, since it will be used by some of the buttons on the Menubar */}
       <Menubar onTabAdd={onTabAdd} onTabSave={onTabSave}
         enableSaveAs={enableSaveAs}
@@ -387,8 +386,7 @@ function handleTabDeletion(indexToDelete) {
       />
       {/* No props for the Toolbar */}
       <Toolbar />
-      {/* Pass  to the Tabbar the tabs and the functionalities of the tab*/}
-      <Tabbar tabs={tabs} onTabDelete={onTabDelete} onTabAdd={onTabAdd} onTabChangeName={onTabChangeName} onTabClick={onTabClick} unsavedChanges={unsavedChanges}/>
+      
       {/* Pass to the Modal the content of the modal and the functionalities of its button*/}
       <Modal {...modalProps} isOpen={isModalOpen} onClose={closeModal} />
   </div>

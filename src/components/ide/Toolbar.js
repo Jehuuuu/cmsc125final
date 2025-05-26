@@ -9,7 +9,8 @@ import FormatAlignLeftIcon from '@mui/icons-material/FormatAlignLeft';
 import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
 import FormatAlignRightIcon from '@mui/icons-material/FormatAlignRight';
 import FormatAlignJustifyIcon from '@mui/icons-material/FormatAlignJustify';
-import { useCurrentEditor } from "@tiptap/react";
+import { useContext } from 'react';
+import { EditorContext } from '../../utils/EditorContext';
 
 /**  
  * This function is used for toolbar configuration with tiptap editor. 
@@ -18,10 +19,9 @@ import { useCurrentEditor } from "@tiptap/react";
 */
 export default function Toolbar() {
   /**  
-   * This hook is used to get the current editor instance. 
-   * If no editor is available, the funtion returns null. 
+   * Get the editor from the EditorContext 
   */
-  const { editor } = useCurrentEditor();
+  const { editor } = useContext(EditorContext);
 
   if (!editor) {
     return null;
@@ -34,10 +34,11 @@ export default function Toolbar() {
      * It also has an ID for easier implementation of the voice commands.
      * Some buttons also have a `disabled` prop which is set based on whether the respective 
      * formatting option can be toggled on the current editor state.
-     * The rendered toolbar is wrapped in a div with class name 'container toolbar-container' 
-     * and with a specific margin bottom.
+     * The rendered toolbar is wrapped in a div with class name 'toolbar-container'.
+     * The buttons are organized into logical groups for better organization.
      */
-    <div className="container toolbar-container" style={{marginBottom: '10px'}}>
+    <div className="toolbar-container">
+      <div className="menubar-group">
       <button
         id='TB-BOLD'
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -68,6 +69,11 @@ export default function Toolbar() {
         <StrikethroughIcon className="menubar-button-icon" />
         <span className="menubar-button-label">Strike</span>
       </button>
+      </div>
+
+      <div className="vertical-division"/>
+
+      <div className="menubar-group">
       <button
         id='TB-BULLETS'
         onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -88,6 +94,11 @@ export default function Toolbar() {
         <FormatListNumberedIcon className="menubar-button-icon" />
         <span className="menubar-button-label">Numbers</span>
       </button>
+      </div>
+
+      <div className="vertical-division"/>
+
+      <div className="menubar-group">
       <button
         id='TB-CODE'
         onClick={() => editor.chain().focus().toggleCode().run()}
@@ -108,8 +119,12 @@ export default function Toolbar() {
         <DeveloperModeIcon className="menubar-button-icon" />
         <span className="menubar-button-label">Block</span>
       </button>
+      </div>
       
-      {/* Add text alignment buttons */}
+      <div className="vertical-division"/>
+      
+      {/* Text alignment buttons */}
+      <div className="menubar-group">
       <button
         id='TB-ALIGN-LEFT'
         onClick={() => editor.chain().focus().setTextAlign('left').run()}
@@ -150,6 +165,7 @@ export default function Toolbar() {
         <FormatAlignJustifyIcon className="menubar-button-icon" />
         <span className="menubar-button-label">Justify</span>
       </button>
+      </div>
     </div>
   );
 } 

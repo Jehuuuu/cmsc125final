@@ -1,17 +1,19 @@
 // import necessary libraries and components for the text editor
-import ListItem from "@tiptap/extension-list-item"
-import Placeholder from '@tiptap/extension-placeholder';
+import { useEditor, EditorContent } from "@tiptap/react";
+import { useState, useEffect, useContext } from "react";
+import BlobImg from '../../images/ide/welcome.png';
 import StarterKit from "@tiptap/starter-kit";
+import TextAlign from '@tiptap/extension-text-align';
+import ListItem from "@tiptap/extension-list-item";
 import TextStyle from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
-import { EditorProvider } from "@tiptap/react";
-import { useState, useEffect } from "react";
-import BlobImg from '../../images/ide/welcome.png';
-import TextAlign from '@tiptap/extension-text-align'; // Import text alignment extension
+import Placeholder from '@tiptap/extension-placeholder';
+import History from '@tiptap/extension-history';
 
 // import local files and components
-import Header from "./Header";
 import { LOCAL_STORAGE_KEYS, getLocalStorageItem, setLocalStorageItem } from "../../utils/ideUtils";
+import { TabContext } from "../../utils/TabContext";
+import { EditorContext } from "../../utils/EditorContext";
 
 /**
  * 
@@ -21,19 +23,21 @@ import { LOCAL_STORAGE_KEYS, getLocalStorageItem, setLocalStorageItem } from "..
  * @returns JSX element
  */
 export default function TextEditor({ transcript }) {
-// 'extensions' constant is an array of configurations for the EditorProvider component from the 'tiptap' library
-// each configuration in the array is an extension that adds or modifies functionality in the editor
-// 'Color' extension is configured to apply to 'TextStyle' and 'ListItem' types
-// 'TextStyle' extension is configured to apply to 'ListItem' type
-// 'StarterKit' extension is configured to modify the behavior of bullet lists and ordered lists
-// for both bullet lists and ordered lists, 'keepMarks' is set to true, meaning text formatting (like bold or italic) 
-// will be kept when creating a new list item
-// 'keepAttributes' is set to false, meaning other attributes (like link URLs) 
-// will not be kept when creating a new list item.
-  const extensions = [
+  // Get tab context
+  const { tabs, updateTabContent } = useContext(TabContext);
+  // Get editor context
+  const { setEditor: setEditorContext } = useContext(EditorContext);
+  
+  // react hook to set the initial state of the editor
+  const [isEmpty, setIsEmpty] = useState(true);
+
+  // Initialize editor with extensions
+  const editor = useEditor({
+    extensions: [
     Color.configure({ types: [TextStyle.name, ListItem.name] }),
     TextStyle.configure({ types: [ListItem.name] }),
     StarterKit.configure({
+      history: false, // Disable the default history that comes with StarterKit
       bulletList: {
         keepMarks: true,
         keepAttributes: false,
@@ -46,47 +50,52 @@ export default function TextEditor({ transcript }) {
     Placeholder.configure({
       placeholder: 'Write content here'
     }),
-    TextAlign.configure({ // Add this configuration for text alignment
+    TextAlign.configure({
       types: ['heading', 'paragraph'],
       alignments: ['left', 'center', 'right', 'justify'],
       defaultAlignment: 'left',
     }),
-  ];
-
-  // react hook to set the initial state of the editor
-  const [isEmpty, setIsEmpty] = useState(true);
-
-  // function to call when EditorProvider => {editor} param is updated/changed
-  const onUpdate = ({ editor }) => {
-    
-    setLocalStorageItem(LOCAL_STORAGE_KEYS.FILE_CONTENT, editor.getHTML()); // saving the editor's content to local storage
-    
-    var fileList = getLocalStorageItem(LOCAL_STORAGE_KEYS.FILE_LIST); // get the list of files from local storage
-
-    var fileName = getLocalStorageItem(LOCAL_STORAGE_KEYS.FILE_NAME); // get the current file name from local storage
-    
-    // map function to create new array by iterating through each item in fileList array
-    var updatedFileList = fileList.map(tab => {
-      // if the name of the current item (tab) matches the fileName
-      if (tab.name === fileName) {
-        var newContent = { // create a new object with the updated content of the editor
-          ...tab,
-          content: editor.getHTML()
-        }
-        return newContent; // return the new object
-      } else {
-        return tab; // otherwise, return the current item (tab)
-        };
-    });
-    setLocalStorageItem(LOCAL_STORAGE_KEYS.FILE_LIST, updatedFileList); // save the updated file list to local storage
-  }
+    History.configure({
+      depth: 100,
+      newGroupDelay: 500,
+    }),
+    ],
+    content: getLocalStorageItem(LOCAL_STORAGE_KEYS.FILE_CONTENT),
+    onUpdate: ({ editor, transaction }) => {
+      // Skip if we're updating from a tab change
+      if (window.__updatingTabContent) return;
+      
+      const content = editor.getHTML();
+      
+      // Save content to localStorage 
+      setLocalStorageItem(LOCAL_STORAGE_KEYS.FILE_CONTENT, content);
+      
+      // Update tab content through context
+      updateTabContent(content);
+      
+      // Log history state
+      console.log('Update: Can redo after update:', editor.can().redo());
+    }
+  });
+  
+  // Set editor in the context when it's available
+  useEffect(() => {
+    if (editor) {
+      setEditorContext(editor);
+      
+      // Add debug logging for undo/redo state
+      editor.on('update', () => {
+        console.log('Can undo:', editor.can().undo());
+        console.log('Can redo:', editor.can().redo());
+      });
+    }
+  }, [editor, setEditorContext]);
   
   // fetch fileList and update isEmpty to show welcome, honey in the editor
   useEffect(() => {
     const fetchFileList = () => {
       // check if there are tabs that are active in the editor
-      var fileList = getLocalStorageItem(LOCAL_STORAGE_KEYS.FILE_LIST);
-      if (fileList && fileList.length > 0) {
+      if (tabs && tabs.length > 0) {
         setIsEmpty(false);
       } else {
         setIsEmpty(true);
@@ -94,50 +103,61 @@ export default function TextEditor({ transcript }) {
     };
   
     fetchFileList(); // call fetchFileList immediately
-    const intervalId = setInterval(fetchFileList, 50); // set an interval to call fetchFileList every 50 milliseconds
-    return () => clearInterval(intervalId); // clear the interval when the component unmounts
-  }, []); 
+  }, [tabs]); 
 
   // Store file_list string in a variable to fix the ESLint warning
   const [showBlob, setShowBlob] = useState(false);
   useEffect(() => {
-    const fileListString = localStorage.getItem("ide_file_list");
-    if(fileListString === "[]") {
+    if(tabs.length === 0) {
       setShowBlob(true);
     } else {
       setShowBlob(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [tabs]);
   
-  // Check file list changes
+  // Update editor content when tabs change
   useEffect(() => {
-    const checkFileList = () => {
-      const fileListString = localStorage.getItem("ide_file_list");
-      if(fileListString === "[]") {
-        setShowBlob(true);
-      } else {
-        setShowBlob(false);
-      }
-    };
+    if (!editor) return;
     
-    const intervalId = setInterval(checkFileList, 500);
-    return () => clearInterval(intervalId);
-  }, [])
+    const activeTab = tabs.find(tab => tab.isSelected);
+    
+    // Only update content if the current content differs from tab content
+    // This preserves the history stack
+    const currentContent = editor.getHTML();
+    const tabContent = activeTab ? activeTab.content : '';
+    
+    // Skip setting content if we're just returning to the same tab
+    // or if content is identical to preserve history stack
+    if (currentContent !== tabContent) {
+      console.log("Setting content from tab, preserving history");
+      
+      // Use a special flag to track whether we're setting content from a tab change
+      // so we don't mess up the redo stack
+      window.__updatingTabContent = true;
+      
+      // Use chain API with preserveHistory option
+      editor.commands.setContent(tabContent || '', {
+        preserveHistory: true
+      });
+      
+      window.__updatingTabContent = false;
+    }
+  }, [editor, tabs]);
 
   return (
   // use css first-open if no active tab
   <div className={`editor-cont ${isEmpty ? 'first-open' : ''}`}>
-      {/* EditorProvider component with the following props */}
-      <EditorProvider
-        slotBefore={<Header />} // render Header component before the editor
-        extensions={extensions} // add functionality to the editor
-        content={getLocalStorageItem(LOCAL_STORAGE_KEYS.FILE_CONTENT)} // get the content from local storage
-        onUpdate={editor => onUpdate(editor)} // call the onUpdate function when the editor is updated
-      ></EditorProvider>
-      {showBlob ?
-      <img src={BlobImg} alt="Darling IDE" className="text-editor-blob" /> 
-      : null} 
+      {/* The editor container where TipTap will mount */}
+      <div className="editor-container">
+        {/* EditorContent will mount TipTap directly here */}
+        <EditorContent editor={editor} />
+      </div>
+      
+      {showBlob && 
+        <div className="welcome-image-container">
+          <img src={BlobImg} alt="Darling IDE" className="text-editor-blob" /> 
+        </div>
+      }
     </div>
   );
 } 
