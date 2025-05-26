@@ -158,6 +158,18 @@ export default function Simulation(props) {
     
     return (
         <div className="progress-container">
+            {/** Counter display for totalSteps and valuemax */}
+            <div className="counter-display" style={{
+                textAlign: 'center',
+                padding: '10px',
+                marginBottom: '10px',
+                backgroundColor: 'var(--color-blue)',
+                color: 'white',
+                borderRadius: '5px',
+                fontWeight: 'bold'
+            }}>
+                Current Time Unit: {totalSteps} / Total Time Units: {valuemax}
+            </div>
             {/** use to display the moving people for interactive simulation */}
             <div className='gif-container'> 
                 <img 

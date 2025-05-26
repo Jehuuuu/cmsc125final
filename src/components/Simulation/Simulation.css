@@ -61,3 +61,18 @@
 .timeline-item {
   text-align: right;
 }
+
+.counter-display {
+    text-align: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: var(--color-blue);
+    color: white;
+    border-radius: 5px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-size: 1.1em;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto 20px auto;
+}
