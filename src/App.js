@@ -5,6 +5,7 @@ import './App.css';
 import Main from './pages/Main';
 import Schedule from './pages/Schedule';
 import IDE from './pages/IDE';
+import OSSimulation from './pages/OSSimulation';
 
 /**
  * This is the main App component.
@@ -42,10 +43,11 @@ function App() {
       />
       <Router> {/** set up the routes */}
         <Routes>
-          <Route path="/" element={<Navigate to="/schedule" />} />
+          <Route path="/" element={<Navigate to="/os-simulation" />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/simulation" element={<Main />} />
           <Route path="/ide" element={<IDE />} />
+          <Route path="/os-simulation" element={<OSSimulation />} />
         </Routes>
       </Router>
     </div>
