@@ -1,7 +1,7 @@
 // Importing necessary functions from data-funcs.js
-import { deleteRow, editRow, filterRows, getRows } from "../components/data-funcs";
-// Importing toast function from react-hot-toast for notifications
+import { deleteRow, editRow, filterRows, getRows, deallocatePages } from "../components/data-funcs";
 import { toast } from "react-hot-toast";
+
 
 // Defining an async function to get the process with the shortest burst time
 const getShortestBurstProcess = async () => {
@@ -67,39 +67,43 @@ const changeStatus = async () => {
     }
 }
 
+const deleteDoneProcess = async (data) => {
+    console.log(`SJF: Process ${data.process_id} completed`);
+    
+    // Free memory pages first
+    const deallocationResult = await deallocatePages(data.process_id.toString());
+    if (deallocationResult.success) {
+        console.log(`Memory freed for process ${data.process_id}: ${deallocationResult.message}`);
+    }
+    
+    // Then delete from PCB
+    await deleteRow(data.id, "pcb");
+}
+
 // Defining a variable to check if a toast has been shown
 let hasShownToast = false;
 
 // Exporting an async function named SJF
 export const SJF = async () => {
-
-    // Checking if a toast has not been shown
     if (!hasShownToast) {
-        // Showing a success toast with the message "Simulating Shortest Job First..."
         toast.success("Simulating Shortest Job First...");
-        // Setting the variable to true to indicate that a toast has been shown
         hasShownToast = true;
     }
 
-    // Fetching the currently running process
     const running = await filterRows("status", "Running", "pcb");
 
-    // Checking if there is a currently running process
     if(running && running.length !== 0) {
-
-        // Checking if the burst time of the process is greater than 0
-        if(running[0].burst_time > 0) {
-            // Decrementing the burst time of the process and pushing the changes
-            await updateProcess(running[0], "Running", running[0].burst_time - 1);
-            await editRow(running[0], "pcb")
-        }
-        else{  
-            // Deleting the process if the burst time is 0
-            await deleteRow(running[0].id, "pcb");
+        const process = running[0];
+        
+        if(process.burst_time > 0) {
+            // Continue executing
+            await updateProcess(process, "Running", process.burst_time - 1);
+            await editRow(process, "pcb");
+        } else {
+            // Process completed - use enhanced deletion
+            await deleteDoneProcess(process);
         }
     } 
         
-    // Changing the status of the process
     changeStatus();
-
 }

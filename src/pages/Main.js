@@ -44,6 +44,7 @@ export default function Main() {
     const [currProcess, setCurrProcess] = useState({});
     const [changePolicy, setChangePolicy] = useState(false);
     const [toPolicy, setToPolicy] = useState("First Come, First Serve");
+    const [processingQueue, setProcessingQueue] = useState(false);
     const [selectedPolicy, setSelectedPolicy] = useState(
         location.state 
         ? location.state.policy 
@@ -176,13 +177,13 @@ export default function Main() {
                 
                 // Then run the scheduling policy
                 if(selectedPolicy === "First Come, First Serve") {
-                    FCFS();
+                    FCFS(false, deleteRowPaged);
                 } else if(selectedPolicy === "Shortest Job First") {
-                    SJF();
+                    SJF(deleteRowPaged);
                 } else if(selectedPolicy === "Priority") {
-                    Priority();
+                    Priority(deleteRowPaged);
                 } else if(selectedPolicy === "Round Robin") { 
-                    RoundRobin()
+                    RoundRobin(deleteRowPaged);
                 }
             
                 changeWaitTime();
@@ -192,7 +193,7 @@ export default function Main() {
                 // Update data to trigger re-render
                 setData(await getRows("pcb"));
               
-            }, 3000);
+            }, 1000);
         } else {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
@@ -226,18 +227,37 @@ export default function Main() {
 
     // Updated job queue function for paged memory
     async function checkJobQueuePaged() {
+        // Prevent concurrent queue processing
+        if (processingQueue) {
+            console.log('Queue processing already in progress, skipping...');
+            return;
+        }
+        
         try {
+            setProcessingQueue(true);
+            
             const queue = await getRows("queue");
             setJobQueue(queue.length);
             
-            // Process jobs one at a time to avoid conflicts
-            for (let i = 0; i < queue.length; i++) {
-                const job = queue[i];
+            if (queue.length === 0) {
+                return;
+            }
+            
+            console.log(`Processing job queue with ${queue.length} waiting processes`);
+            
+            // Sort queue by arrival time for fairness
+            const sortedQueue = queue.sort((a, b) => a.arrival_time - b.arrival_time);
+            
+            // Process jobs one at a time
+            for (const job of sortedQueue) {
+                console.log(`Attempting to allocate memory for process ${job.process_id} (${job.memory_size} units)`);
                 
                 // Try to allocate pages for the job
                 const allocationResult = await allocatePages(job.process_id, job.memory_size);
                 
                 if (allocationResult.success) {
+                    console.log(`Successfully allocated memory for process ${job.process_id}`);
+                    
                     // Create PCB entry with proper initialization
                     const pcbEntry = {
                         ...job,
@@ -253,17 +273,19 @@ export default function Main() {
                     
                     toast.success(`Process ${job.process_id} allocated ${Math.ceil(job.memory_size / 6)} page(s)`);
                     
-                    // Break after successful allocation to process one job per cycle
+                    // Process one job per cycle to avoid overwhelming the system
                     break;
                 } else {
-                    // Log why allocation failed for debugging
-                    console.log(`Process ${job.process_id} waiting: ${allocationResult.message}`);
+                    console.log(`Process ${job.process_id} still waiting: ${allocationResult.message}`);
                 }
             }
         } catch (error) {
             console.error('Error in checkJobQueuePaged:', error);
+        } finally {
+            setProcessingQueue(false);
         }
     }
+    
 
     // Updated deleteRow function for paged memory
     const deleteRowPaged = async (process_id, table) => {

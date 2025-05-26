@@ -82,23 +82,28 @@ export const editRow = async (data, table) => {
 // Function to delete a row from a table
 export const deleteRow = async (process_id, table) => {
     try {
-      // Making a DELETE request to the API
-      const response = await axios.delete(baseURL + table + "/" + process_id);
-      // If the table is pcb, update the memory status
-      if (table === "pcb") {
-        const memory = await filterRows("row_id", process_id, "memory")
-        if(memory.length>0){
-          const updated_memory = { ...memory[0], status: "Free", process_id: "", job_size: "", row_id:"", fragmentation: "None" }
-          const memory_res = await editRow(updated_memory, "memory")
+        console.log(`Deleting process ${process_id} from ${table}`);
+        
+        // First, handle memory deallocation for PCB processes
+        if (table === "pcb") {
+            const result = await deallocatePages(process_id.toString());
+            if (result.success) {
+                console.log(`Memory freed for process ${process_id}: ${result.message}`);
+            } else {
+                console.warn(`Failed to free memory for process ${process_id}:`, result.error);
+            }
         }
-      }
-        // Returning the status of the response
+        
+        // Then delete the process record
+        const response = await axios.delete(baseURL + table + "/" + process_id);
+        console.log(`Process ${process_id} deleted from ${table}`);
+        
         return response.status;
     } catch (error) {
-        // Logging any errors
-        console.error(error);
+        console.error(`Error deleting process ${process_id} from ${table}:`, error);
+        throw error;
     }
-}
+};
 
 // Function to delete all rows from a table
 export const deleteAllRows = async (table) => {
@@ -157,12 +162,16 @@ export const initializePagedMemory = async () => {
 // Allocate pages for a process
 export const allocatePages = async (processId, requiredSize) => {
     try {
+        console.log(`Attempting to allocate ${requiredSize} units for process ${processId}`);
+        
         const PAGE_SIZE = 6;
         const pagesNeeded = Math.ceil(requiredSize / PAGE_SIZE);
         
         // Get free pages
         const allPages = await getRows("memory");
         const freePages = allPages.filter(page => page.status === "Free");
+        
+        console.log(`Need ${pagesNeeded} pages, have ${freePages.length} free pages`);
         
         if (freePages.length < pagesNeeded) {
             return { 
@@ -190,6 +199,8 @@ export const allocatePages = async (processId, requiredSize) => {
             await editRow(updatedPage, "memory");
             allocatedPageNumbers.push(page.page_number);
             remainingSize -= allocationSize;
+            
+            console.log(`Allocated page ${page.page_number} (${allocationSize}/${PAGE_SIZE} units) to process ${processId}`);
         }
         
         return { 
@@ -207,11 +218,24 @@ export const allocatePages = async (processId, requiredSize) => {
 // Deallocate pages for a process
 export const deallocatePages = async (processId) => {
     try {
+        console.log(`Deallocating pages for process ${processId}`);
+        
         const allPages = await getRows("memory");
         const allocatedPages = allPages.filter(page => 
             page.process_id && page.process_id.toString() === processId.toString()
         );
         
+        console.log(`Found ${allocatedPages.length} pages to deallocate for process ${processId}`);
+        
+        if (allocatedPages.length === 0) {
+            return { 
+                success: true, 
+                freedPages: 0,
+                message: `No pages found for process ${processId}` 
+            };
+        }
+        
+        // Free each allocated page
         for (const page of allocatedPages) {
             const freedPage = {
                 ...page,
@@ -221,6 +245,7 @@ export const deallocatePages = async (processId) => {
                 fragmentation: "None"
             };
             await editRow(freedPage, "memory");
+            console.log(`Freed page ${page.page_number} for process ${processId}`);
         }
         
         return { 

@@ -1,12 +1,18 @@
-// Importing necessary functions from data-funcs.js
-import { deleteRow, editRow, filterRows, getRows } from "../components/data-funcs";
-// Importing toast function from react-hot-toast for notifications
+// Priority.js - Updated process completion handling
+import { deleteRow, editRow, filterRows, getRows, deallocatePages } from "../components/data-funcs";
 import { toast } from "react-hot-toast";
-
 // Defining an async function to delete a completed process
 const deleteDoneProcess = async (data) => {
-    // Deleting the row with the given id from the "pcb" table
-    await deleteRow(data.id, "pcb")
+    console.log(`Priority: Process ${data.process_id} completed`);
+    
+    // Free memory pages first
+    const deallocationResult = await deallocatePages(data.process_id.toString());
+    if (deallocationResult.success) {
+        console.log(`Memory freed for process ${data.process_id}: ${deallocationResult.message}`);
+    }
+    
+    // Then delete from PCB
+    await deleteRow(data.id, "pcb");
 }
 
 // Defining an async function to push changes to a row

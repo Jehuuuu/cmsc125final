@@ -1,6 +1,5 @@
-import { deleteRow, editRow, filterRows } from "../components/data-funcs";
+import { deleteRow, editRow, filterRows, deallocatePages } from "../components/data-funcs";
 import { toast } from "react-hot-toast";
-
 /**
  * Deletes a done process from the PCB (Process Control Block).
  *
@@ -9,7 +8,16 @@ import { toast } from "react-hot-toast";
  * @throws {Error} - If there is an error while deleting the process.
  */
 const deleteDoneProcess = async (data) => {
-    await deleteRow(data.id, "pcb")
+    console.log(`FCFS: Process ${data.process_id} completed`);
+    
+    // Free memory pages first
+    const deallocationResult = await deallocatePages(data.process_id.toString());
+    if (deallocationResult.success) {
+        console.log(`Memory freed for process ${data.process_id}: ${deallocationResult.message}`);
+    }
+    
+    // Then delete from PCB
+    await deleteRow(data.id, "pcb");
 }
 /**
  * Updates a process row in the Process Control Block (PCB).
@@ -51,39 +59,34 @@ let hasShownToast = false;
  * @returns {Promise<boolean>} - Returns a promise that resolves to a boolean indicating whether the cycle has ended.
  */
 export const FCFS = async (roundRobin = false) => {
-
-    // show toast if not shown yet and roundRobin is false to ensure user it is already simulating
     if (!hasShownToast && roundRobin === false) {
         toast.success("Simulating First Come, First Serve...");
         hasShownToast = true;
     }
 
-    // get the current running process
     const running = await filterRows("status", "Running", "pcb");
 
-    // check if there is a running process
     if(running.length !== 0) {
-
-        if (running[0].burst_time > 0) {
-            
-            // decrement burst_time
-            running[0].burst_time -= 1;
-            running[0].steps += 1;
-            pushChanges(running[0])
-            
-        } else {
-
-            // change current process
-          deleteDoneProcess(running[0]);
-          if(!roundRobin){
-            changeStatus();
-          } else return true
-        }
+        const process = running[0];
         
-        // end cycle
+        if (process.burst_time > 0) {
+            // Continue executing
+            process.burst_time -= 1;
+            process.steps += 1;
+            pushChanges(process);
+        } else {
+            // Process completed - use enhanced deletion
+            await deleteDoneProcess(process);
+            
+            if(!roundRobin){
+                changeStatus();
+            } else {
+                return true;
+            }
+        }
         return false;
     } 
-    // get new running process if no current running process
+    
     changeStatus();
-    return false
+    return false;
 }
