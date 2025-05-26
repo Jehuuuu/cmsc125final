@@ -13,12 +13,7 @@ import {
 const LogDisplay = ({ logs, maxHeight = '300px' }) => {
     const logEndRef = useRef(null);
 
-    // Auto-scroll to bottom when new logs are added
-    useEffect(() => {
-        if (logEndRef.current) {
-            logEndRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [logs]);
+    // Auto-scroll disabled - users can manually scroll through logs
 
     const getLogIcon = (type) => {
         switch (type) {
@@ -114,7 +109,7 @@ const LogDisplay = ({ logs, maxHeight = '300px' }) => {
             <Card.Footer className="text-muted small">
                 <div className="d-flex justify-content-between">
                     <span>Total entries: {logs.length}</span>
-                    <span>Auto-scroll enabled</span>
+                    <span>Manual scroll</span>
                 </div>
             </Card.Footer>
         </Card>

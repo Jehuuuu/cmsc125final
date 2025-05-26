@@ -361,6 +361,11 @@ export class OSSimulator {
                 this.addProcess('P3', [3, 4, 5, 6, 7], 0, 0);
                 break;
                 
+            case 'custom':
+                // Empty scenario - no processes added
+                // Users will add all processes manually
+                break;
+                
             default:
                 this.addProcess('P1', [1, 2, 3, 2, 4], 1, 0);
                 this.addProcess('P2', [2, 1, 4, 3], 2, 1);

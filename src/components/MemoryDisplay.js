@@ -35,7 +35,7 @@ const MemoryDisplay = ({ memory, stats }) => {
 
     const FrameDisplay = ({ frames, algorithm }) => (
         <div className="memory-frames mb-3">
-            <h6>Memory Frames ({algorithm})</h6>
+            <h6>Memory Frames</h6>
             <Row>
                 {frames.map((page, index) => (
                     <Col key={index} className="mb-2">
@@ -106,7 +106,7 @@ const MemoryDisplay = ({ memory, stats }) => {
         return (
             <Card className="mb-3">
                 <Card.Header>
-                    <h6>Access Order ({algorithm})</h6>
+                    <h6>Access Order</h6>
                 </Card.Header>
                 <Card.Body>
                     <div className="d-flex flex-wrap">
@@ -128,9 +128,7 @@ const MemoryDisplay = ({ memory, stats }) => {
                         ))}
                     </div>
                     <small className="text-muted">
-                        {algorithm === 'LRU' && 'Least Recently Used order (oldest → newest)'}
-                        {algorithm === 'FIFO' && 'First In First Out order (oldest → newest)'}
-                        {algorithm === 'OPT' && 'Optimal replacement tracking'}
+                        Access order (oldest → newest)
                     </small>
                 </Card.Body>
             </Card>
@@ -157,29 +155,7 @@ const MemoryDisplay = ({ memory, stats }) => {
                 algorithm={memory.algorithm}
             />
 
-            {/* Algorithm Info */}
-            <Card>
-                <Card.Header>
-                    <h6>Algorithm Information</h6>
-                </Card.Header>
-                <Card.Body>
-                    <div className="mb-2">
-                        <strong>Current Algorithm:</strong> 
-                        <Badge bg="primary" className="ms-2">{memory.algorithm}</Badge>
-                    </div>
-                    <div className="small text-muted">
-                        {memory.algorithm === 'FIFO' && 
-                            'First In First Out: Replaces the page that has been in memory the longest.'
-                        }
-                        {memory.algorithm === 'LRU' && 
-                            'Least Recently Used: Replaces the page that has not been accessed for the longest time.'
-                        }
-                        {memory.algorithm === 'OPT' && 
-                            'Optimal: Replaces the page that will not be used for the longest time in the future (requires future knowledge).'
-                        }
-                    </div>
-                </Card.Body>
-            </Card>
+
         </div>
     );
 };

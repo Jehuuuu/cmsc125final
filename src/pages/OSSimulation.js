@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Container, Row, Col, Card, Button, Form, Alert, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Form, Alert, Badge, Table, ListGroup } from 'react-bootstrap';
 import { 
     PlayArrow as PlayArrowIcon, 
     Pause as PauseIcon, 
@@ -177,8 +177,117 @@ const OSSimulation = () => {
         return <Badge bg="primary">Manual</Badge>;
     };
 
+    // Get all processes from all queues
+    const getAllProcesses = () => {
+        if (!simulationState?.queues) return [];
+        
+        const allProcesses = [
+            ...simulationState.queues.jobQueue,
+            ...simulationState.queues.readyQueue,
+            ...simulationState.queues.waitingQueue,
+            ...simulationState.queues.terminatedQueue
+        ];
+        
+        if (simulationState.queues.currentProcess) {
+            allProcesses.push(simulationState.queues.currentProcess);
+        }
+        
+        return allProcesses;
+    };
+
+    const getProcessStatusBadge = (status) => {
+        const variants = {
+            'new': 'secondary',
+            'ready': 'primary',
+            'running': 'success',
+            'waiting': 'warning',
+            'terminated': 'success'
+        };
+        return <Badge bg={variants[status] || 'secondary'} className="me-1">{status}</Badge>;
+    };
+
     return (
         <Container fluid className="os-simulation">
+            <Row className="mb-3">
+                <Col md={6}>
+                    <AlgorithmSelector
+                        cpuAlgorithm={cpuAlgorithm}
+                        memoryAlgorithm={memoryAlgorithm}
+                        frameCount={frameCount}
+                        timeQuantum={timeQuantum}
+                        selectedScenario={selectedScenario}
+                        onCpuAlgorithmChange={handleCpuAlgorithmChange}
+                        onMemoryAlgorithmChange={handleMemoryAlgorithmChange}
+                        onFrameCountChange={handleFrameCountChange}
+                        onTimeQuantumChange={handleTimeQuantumChange}
+                        onScenarioChange={handleScenarioChange}
+                        disabled={isRunning}
+                    />
+                </Col>
+                <Col md={6}>
+                    <Card>
+                        <Card.Header>
+                            <h6>Process Management</h6>
+                        </Card.Header>
+                        <Card.Body>
+                            <div className="mb-3">
+                                <Button 
+                                    variant="primary" 
+                                    onClick={() => setShowProcessForm(true)}
+                                    disabled={isRunning}
+                                >
+                                    Add Process
+                                </Button>
+                            </div>
+                            
+                            <div>
+                                <h6 className="mb-2">Available Processes ({getAllProcesses().length})</h6>
+                                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                                    {getAllProcesses().length === 0 ? (
+                                        <div className="text-center py-3">
+                                            <p className="text-muted mb-2">No processes available.</p>
+                                            {selectedScenario === 'custom' ? (
+                                                <div className="alert alert-info py-2 mb-0">
+                                                    <small>
+                                                        <strong>Custom Scenario:</strong> Click "Add Process" to create your own processes, 
+                                                        or select a different test scenario to load pre-defined processes.
+                                                    </small>
+                                                </div>
+                                            ) : (
+                                                <small className="text-muted">Add a process or load a test scenario.</small>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <ListGroup variant="flush">
+                                            {getAllProcesses().map((process, index) => (
+                                                <ListGroup.Item key={`${process.pid}-${index}`} className="px-0 py-2">
+                                                    <div className="d-flex justify-content-between align-items-start">
+                                                        <div>
+                                                            <strong>{process.pid}</strong>
+                                                            <div className="small text-muted">
+                                                                Pages: [{process.pageAccesses.join(', ')}]
+                                                                {process.priority > 0 && ` | Priority: ${process.priority}`}
+                                                                {process.arrivalTime > 0 && ` | Arrival: ${process.arrivalTime}`}
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-end">
+                                                            {getProcessStatusBadge(process.status)}
+                                                            <div className="small text-muted">
+                                                                {process.currentAccessIndex}/{process.pageAccesses.length}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </ListGroup.Item>
+                                            ))}
+                                        </ListGroup>
+                                    )}
+                                </div>
+                            </div>
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
+
             <Row className="mb-3">
                 <Col>
                     <Card>
@@ -263,49 +372,10 @@ const OSSimulation = () => {
                 </Col>
             </Row>
 
-            <Row className="mb-3">
-                <Col md={6}>
-                    <AlgorithmSelector
-                        cpuAlgorithm={cpuAlgorithm}
-                        memoryAlgorithm={memoryAlgorithm}
-                        frameCount={frameCount}
-                        timeQuantum={timeQuantum}
-                        selectedScenario={selectedScenario}
-                        onCpuAlgorithmChange={handleCpuAlgorithmChange}
-                        onMemoryAlgorithmChange={handleMemoryAlgorithmChange}
-                        onFrameCountChange={handleFrameCountChange}
-                        onTimeQuantumChange={handleTimeQuantumChange}
-                        onScenarioChange={handleScenarioChange}
-                        disabled={isRunning}
-                    />
-                </Col>
-                <Col md={6}>
-                    <Card>
-                        <Card.Header>
-                            <h6>Process Management</h6>
-                        </Card.Header>
-                        <Card.Body>
-                            <Button 
-                                variant="primary" 
-                                onClick={() => setShowProcessForm(true)}
-                                disabled={isRunning}
-                                className="me-2"
-                            >
-                                Add Process
-                            </Button>
-                            <Button 
-                                variant="outline-secondary" 
-                                onClick={() => setShowSettings(true)}
-                            >
-                                <SettingsIcon /> Settings
-                            </Button>
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
+          
 
             <Row className="mb-3">
-                <Col md={8}>
+                <Col md={4}>
                     <QueueDisplay 
                         queues={simulationState?.queues}
                         currentTime={simulationState?.currentTime}
@@ -317,20 +387,20 @@ const OSSimulation = () => {
                         stats={simulationState?.memoryStats}
                     />
                 </Col>
+                <Col md={4}>
+                    <LogDisplay 
+                        logs={simulationState?.logs || []}
+                        maxHeight="400px"
+                    />
+                </Col>
             </Row>
 
             <Row className="mb-3">
-                <Col md={6}>
+                <Col>
                     <StatisticsDisplay 
                         memoryStats={simulationState?.memoryStats}
                         schedulerStats={simulationState?.schedulerStats}
                         algorithms={simulationState?.algorithms}
-                    />
-                </Col>
-                <Col md={6}>
-                    <LogDisplay 
-                        logs={simulationState?.logs || []}
-                        maxHeight="400px"
                     />
                 </Col>
             </Row>
@@ -348,11 +418,10 @@ const OSSimulation = () => {
             <Alert variant="info" className="mt-3">
                 <Alert.Heading>How to Use</Alert.Heading>
                 <p>
-                    1. Select CPU scheduling and page replacement algorithms<br/>
-                    2. Choose a test scenario or add custom processes<br/>
-                    3. Use controls to start, pause, step through, or auto-run the simulation<br/>
-                    4. Watch how processes move through queues and how memory is managed<br/>
-                    5. Monitor statistics and logs for detailed analysis
+                    1. Add custom processes or use default scenario<br/>
+                    2. Use controls to start, pause, step through, or auto-run the simulation<br/>
+                    3. Watch how processes move through queues and how memory is managed<br/>
+                    4. Monitor statistics and logs for detailed analysis
                 </p>
             </Alert>
         </Container>

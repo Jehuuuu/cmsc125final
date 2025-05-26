@@ -2,7 +2,6 @@ import React from 'react';
 import { Card, Row, Col, ProgressBar, Badge, Table } from 'react-bootstrap';
 import { 
     BarChart, 
-    TrendingUp, 
     Timer,
     Memory,
     Schedule
@@ -67,10 +66,7 @@ const StatisticsDisplay = ({ memoryStats, schedulerStats, algorithms }) => {
                                     <td><strong>Total Accesses:</strong></td>
                                     <td><Badge bg="info">{memoryStats.totalAccesses}</Badge></td>
                                 </tr>
-                                <tr>
-                                    <td><strong>Algorithm:</strong></td>
-                                    <td><Badge bg="primary">{algorithms.memory}</Badge></td>
-                                </tr>
+
                                 <tr>
                                     <td><strong>Fault Rate:</strong></td>
                                     <td className="text-danger">{memoryStats.faultRate}%</td>
@@ -115,10 +111,7 @@ const StatisticsDisplay = ({ memoryStats, schedulerStats, algorithms }) => {
                     <Col md={6}>
                         <Table size="sm" className="mb-0">
                             <tbody>
-                                <tr>
-                                    <td><strong>Algorithm:</strong></td>
-                                    <td><Badge bg="primary">{algorithms.cpu}</Badge></td>
-                                </tr>
+
                                 <tr>
                                     <td><strong>Completed Processes:</strong></td>
                                     <td><Badge bg="success">{schedulerStats.completedProcesses}</Badge></td>
@@ -178,49 +171,7 @@ const StatisticsDisplay = ({ memoryStats, schedulerStats, algorithms }) => {
         </Card>
     );
 
-    const AlgorithmComparisonCard = () => (
-        <Card>
-            <Card.Header>
-                <h6><TrendingUp className="me-2" />Algorithm Information</h6>
-            </Card.Header>
-            <Card.Body>
-                <Row>
-                    <Col md={6}>
-                        <h6 className="text-primary">CPU Scheduling: {algorithms.cpu}</h6>
-                        <div className="small text-muted mb-3">
-                            {algorithms.cpu === 'FIFO' && 
-                                'First-In-First-Out: Processes are executed in order of arrival. Simple but may cause long waiting times for short processes.'
-                            }
-                            {algorithms.cpu === 'SJF' && 
-                                'Shortest Job First: Executes processes with fewest remaining page accesses first. Minimizes average waiting time.'
-                            }
-                            {algorithms.cpu === 'Priority' && 
-                                'Priority Scheduling: Executes highest priority processes first. Can cause starvation of low-priority processes.'
-                            }
-                            {algorithms.cpu === 'RoundRobin' && 
-                                `Round Robin: Each process gets ${algorithms.timeQuantum} time units before being preempted. Fair but may increase turnaround time.`
-                            }
-                        </div>
-                    </Col>
-                    
-                    <Col md={6}>
-                        <h6 className="text-info">Memory Management: {algorithms.memory}</h6>
-                        <div className="small text-muted">
-                            {algorithms.memory === 'FIFO' && 
-                                'First-In-First-Out: Replaces the oldest page in memory. Simple but may not consider page usage patterns.'
-                            }
-                            {algorithms.memory === 'LRU' && 
-                                'Least Recently Used: Replaces the page that has not been accessed for the longest time. Good performance but requires tracking.'
-                            }
-                            {algorithms.memory === 'OPT' && 
-                                'Optimal: Replaces the page that will not be used for the longest time. Best possible performance but requires future knowledge.'
-                            }
-                        </div>
-                    </Col>
-                </Row>
-            </Card.Body>
-        </Card>
-    );
+
 
     return (
         <div>
@@ -232,7 +183,6 @@ const StatisticsDisplay = ({ memoryStats, schedulerStats, algorithms }) => {
 
             <MemoryStatsCard />
             <SchedulerStatsCard />
-            <AlgorithmComparisonCard />
         </div>
     );
 };

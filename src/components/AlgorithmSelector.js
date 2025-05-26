@@ -32,7 +32,8 @@ const AlgorithmSelector = ({
         { value: 'basic', label: 'Basic Test', description: '3 processes with simple page patterns' },
         { value: 'page_fault_heavy', label: 'Page Fault Heavy', description: '2 processes with many unique pages' },
         { value: 'priority_test', label: 'Priority Test', description: '3 processes with different priorities' },
-        { value: 'round_robin_test', label: 'Round Robin Test', description: '3 processes for time-slicing demo' }
+        { value: 'round_robin_test', label: 'Round Robin Test', description: '3 processes for time-slicing demo' },
+        { value: 'custom', label: 'Custom (Empty)', description: 'No pre-added processes - add your own processes manually' }
     ];
 
     return (
