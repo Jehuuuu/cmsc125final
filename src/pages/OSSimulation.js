@@ -63,7 +63,7 @@ const OSSimulation = () => {
 
     // Handle auto-run
     useEffect(() => {
-        if (autoRun && isRunning && !isPaused) {
+        if (autoRun && isRunning && !isPaused && !isSimulationComplete()) {
             intervalRef.current = setInterval(() => {
                 const continueRunning = simulatorRef.current.step();
                 if (!continueRunning) {
@@ -83,7 +83,15 @@ const OSSimulation = () => {
                 clearInterval(intervalRef.current);
             }
         };
-    }, [autoRun, isRunning, isPaused, speed]);
+    }, [autoRun, isRunning, isPaused, speed, simulationState]);
+
+    // Auto-stop when simulation completes
+    useEffect(() => {
+        if (isSimulationComplete() && autoRun) {
+            setAutoRun(false);
+            setIsRunning(false);
+        }
+    }, [simulationState, autoRun]);
 
     // Control functions
     const handleStart = () => {
@@ -113,6 +121,9 @@ const OSSimulation = () => {
         setIsRunning(false);
         setIsPaused(false);
         setAutoRun(false);
+        
+        // Immediately update the simulation state to reflect the reset
+        setSimulationState(simulatorRef.current.getSimulationState());
     };
 
     const handleStep = () => {
@@ -149,16 +160,25 @@ const OSSimulation = () => {
     const handleFrameCountChange = (count) => {
         setFrameCount(count);
         simulatorRef.current.setFrameCount(count);
+        
+        // Update simulation state to reflect the change
+        setSimulationState(simulatorRef.current.getSimulationState());
     };
 
     const handleTimeQuantumChange = (quantum) => {
         setTimeQuantum(quantum);
         simulatorRef.current.setTimeQuantum(quantum);
+        
+        // Update simulation state to reflect the change
+        setSimulationState(simulatorRef.current.getSimulationState());
     };
 
     const handleScenarioChange = (scenario) => {
         setSelectedScenario(scenario);
         simulatorRef.current.loadTestScenario(scenario);
+        
+        // Immediately update the simulation state to reflect the scenario change
+        setSimulationState(simulatorRef.current.getSimulationState());
     };
 
     const handleAddProcess = (processData) => {
@@ -169,13 +189,30 @@ const OSSimulation = () => {
             processData.arrivalTime
         );
         setShowProcessForm(false);
+        
+        // Immediately update the simulation state to reflect the new process
+        setSimulationState(simulatorRef.current.getSimulationState());
     };
 
     const getStatusBadge = () => {
+        if (isSimulationComplete()) return <Badge bg="success">Completed</Badge>;
         if (!isRunning) return <Badge bg="secondary">Stopped</Badge>;
         if (isPaused) return <Badge bg="warning">Paused</Badge>;
         if (autoRun) return <Badge bg="success">Auto Running</Badge>;
         return <Badge bg="primary">Manual</Badge>;
+    };
+
+    // Check if simulation is complete (all processes terminated)
+    const isSimulationComplete = () => {
+        if (!simulationState?.queues) return false;
+        
+        const allProcesses = getAllProcesses();
+        const terminatedProcesses = simulationState.queues.terminatedQueue || [];
+        
+        // Simulation is complete if there are processes and all are terminated
+        return allProcesses.length > 0 && 
+               terminatedProcesses.length === allProcesses.length &&
+               !simulationState.queues.currentProcess;
     };
 
     // Get all processes from all queues
@@ -331,14 +368,14 @@ const OSSimulation = () => {
                                             <Button 
                                                 variant="info" 
                                                 onClick={handleStep}
-                                                disabled={autoRun}
+                                                disabled={autoRun || isSimulationComplete()}
                                             >
                                                 <SkipNextIcon /> Step
                                             </Button>
                                             <Button 
                                                 variant={autoRun ? "danger" : "primary"} 
                                                 onClick={handleAutoRun}
-                                                disabled={isPaused}
+                                                disabled={isPaused || isSimulationComplete()}
                                             >
                                                 {autoRun ? "Stop Auto" : "Auto Run"}
                                             </Button>
