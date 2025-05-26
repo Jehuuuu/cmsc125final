@@ -13,6 +13,7 @@ import QueueDisplay from '../components/QueueDisplay';
 import MemoryDisplay from '../components/MemoryDisplay';
 import LogDisplay from '../components/LogDisplay';
 import StatisticsDisplay from '../components/StatisticsDisplay';
+import TimelineDisplay from '../components/TimelineDisplay';
 import ProcessForm from '../components/ProcessForm';
 import AlgorithmSelector from '../components/AlgorithmSelector';
 import './OSSimulation.css';
@@ -372,7 +373,15 @@ const OSSimulation = () => {
                 </Col>
             </Row>
 
-          
+            {/* Timeline Display */}
+            <Row className="mb-3">
+                <Col>
+                    <TimelineDisplay 
+                        simulationState={simulationState}
+                        logs={simulationState?.logs || []}
+                    />
+                </Col>
+            </Row>
 
             <Row className="mb-3">
                 <Col md={4}>

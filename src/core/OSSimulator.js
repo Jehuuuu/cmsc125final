@@ -140,6 +140,7 @@ export class OSSimulator {
 
         // 4. Execute current process
         if (this.scheduler.currentProcess) {
+            this.log(`Executing process ${this.scheduler.currentProcess.pid}`, 'scheduler');
             this.executeCurrentProcess();
         }
 
@@ -290,7 +291,7 @@ export class OSSimulator {
             memory: this.memoryManager.getFrameState(),
             memoryStats: this.memoryManager.getStatistics(),
             schedulerStats: this.scheduler.getStatistics(),
-            logs: this.logs.slice(-50), // Return last 50 log entries
+            logs: this.logs, // Return all logs for timeline analysis
             algorithms: {
                 cpu: this.scheduler.algorithm,
                 memory: this.memoryManager.algorithm,
