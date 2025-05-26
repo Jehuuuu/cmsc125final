@@ -70,6 +70,61 @@ const command = (name, id) => {
                         toast.dismiss();
                         toast.error('Cancelling add custom row...');
                         break;
+                    // OS Simulator commands
+                    case 'start simulation':
+                        toast.success('Starting OS simulation...');
+                        break;
+                    case 'step simulation':
+                        toast.success('Stepping through simulation...');
+                        break;
+                    case 'auto run':
+                        toast.success('Starting auto run...');
+                        break;
+                    case 'stop auto run':
+                        toast.error('Stopping auto run...');
+                        break;
+                    case 'reset simulation':
+                        toast.success('Resetting simulation...');
+                        break;
+                    case 'add process':
+                        toast.success('Opening add process form...');
+                        break;
+                    case 'set fifo cpu':
+                        toast.success('Setting CPU algorithm to FIFO...');
+                        break;
+                    case 'set shortest job first':
+                        toast.success('Setting CPU algorithm to SJF...');
+                        break;
+                    case 'set priority scheduling':
+                        toast.success('Setting CPU algorithm to Priority...');
+                        break;
+                    case 'set round robin':
+                        toast.success('Setting CPU algorithm to Round Robin...');
+                        break;
+                    case 'set fifo memory':
+                        toast.success('Setting memory algorithm to FIFO...');
+                        break;
+                    case 'set lru memory':
+                        toast.success('Setting memory algorithm to LRU...');
+                        break;
+                    case 'set optimal memory':
+                        toast.success('Setting memory algorithm to Optimal...');
+                        break;
+                    case 'load basic scenario':
+                        toast.success('Loading basic test scenario...');
+                        break;
+                    case 'load page fault scenario':
+                        toast.success('Loading page fault heavy scenario...');
+                        break;
+                    case 'load priority scenario':
+                        toast.success('Loading priority test scenario...');
+                        break;
+                    case 'load round robin scenario':
+                        toast.success('Loading round robin test scenario...');
+                        break;
+                    case 'load custom scenario':
+                        toast.success('Loading custom scenario...');
+                        break;
                 }
             } else {
                 // display an error toast notification if element is not found
@@ -123,30 +178,122 @@ const simulationCommand = (name, action) => {
     }
 }
 
+/**
+ * Custom command for algorithm selection using dropdown changes
+ */
+const algorithmCommand = (name, type, value) => {
+    return {
+        command: name,
+        callback: () => {
+            let element;
+            if (type === 'cpu') {
+                element = document.querySelector('select[data-algorithm-type="cpu"]');
+            } else if (type === 'memory') {
+                element = document.querySelector('select[data-algorithm-type="memory"]');
+            } else if (type === 'scenario') {
+                element = document.querySelector('select[data-algorithm-type="scenario"]');
+            }
+            
+            if (element) {
+                element.value = value;
+                element.dispatchEvent(new Event('change', { bubbles: true }));
+                switch(name){
+                    case 'set fifo cpu':
+                        toast.success('Setting CPU algorithm to FIFO...');
+                        break;
+                    case 'set shortest job first':
+                        toast.success('Setting CPU algorithm to SJF...');
+                        break;
+                    case 'set priority scheduling':
+                        toast.success('Setting CPU algorithm to Priority...');
+                        break;
+                    case 'set round robin':
+                        toast.success('Setting CPU algorithm to Round Robin...');
+                        break;
+                    case 'set fifo memory':
+                        toast.success('Setting memory algorithm to FIFO...');
+                        break;
+                    case 'set lru memory':
+                        toast.success('Setting memory algorithm to LRU...');
+                        break;
+                    case 'set optimal memory':
+                        toast.success('Setting memory algorithm to Optimal...');
+                        break;
+                    case 'load basic scenario':
+                        toast.success('Loading basic test scenario...');
+                        break;
+                    case 'load page fault scenario':
+                        toast.success('Loading page fault heavy scenario...');
+                        break;
+                    case 'load priority scenario':
+                        toast.success('Loading priority test scenario...');
+                        break;
+                    case 'load round robin scenario':
+                        toast.success('Loading round robin test scenario...');
+                        break;
+                    case 'load custom scenario':
+                        toast.success('Loading custom scenario...');
+                        break;
+                }
+            } else {
+                toast.error('Algorithm selector not found');
+            }
+        }
+    }
+}
+
 // Export an array of command objects
 export const commands = [
-    // scheduling policies
+    // scheduling policies (CPU scheduler)
     command('simulate first come first serve', 'First Come, First Serve'),
     command('simulate shortest job first', 'Shortest Job First'),
     command('simulate priority', 'Priority'),
     command('simulate round robin', 'Round Robin'),
 
-    // simulation controls
+    // simulation controls (CPU scheduler)
     simulationCommand('play simulation', 'play'),
     simulationCommand('start simulation', 'play'),
     simulationCommand('pause simulation', 'pause'),
     simulationCommand('stop simulation', 'stop'),
     simulationCommand('resume simulation', 'play'),
 
-    // process control
+    // process control (CPU scheduler)
     command('add new process', 'New'),
     command('add custom process', 'Custom'),
     command('generate random process', 'Random'),
     command('delete process', 'Delete'),
 
-    // modal response
+    // modal response (CPU scheduler)
     command('yes', 'Yes'),
     command('no', 'No'),
     command('add row', 'Add New Row'),
     command('close', 'Close'),
+
+    // OS Simulator simulation controls
+    command('start simulation', 'os-start-btn'),
+    command('pause simulation', 'os-pause-btn'),
+    command('stop simulation', 'os-stop-btn'),
+    command('step simulation', 'os-step-btn'),
+    command('auto run', 'os-auto-btn'),
+    command('stop auto run', 'os-auto-btn'),
+    command('reset simulation', 'os-reset-btn'),
+    command('add process', 'os-add-process-btn'),
+
+    // OS Simulator CPU algorithm selection
+    algorithmCommand('set fifo cpu', 'cpu', 'FIFO'),
+    algorithmCommand('set shortest job first', 'cpu', 'SJF'),
+    algorithmCommand('set priority scheduling', 'cpu', 'Priority'),
+    algorithmCommand('set round robin', 'cpu', 'RoundRobin'),
+
+    // OS Simulator memory algorithm selection
+    algorithmCommand('set fifo memory', 'memory', 'FIFO'),
+    algorithmCommand('set lru memory', 'memory', 'LRU'),
+    algorithmCommand('set optimal memory', 'memory', 'OPT'),
+
+    // OS Simulator scenario selection
+    algorithmCommand('load basic scenario', 'scenario', 'basic'),
+    algorithmCommand('load page fault scenario', 'scenario', 'page_fault_heavy'),
+    algorithmCommand('load priority scenario', 'scenario', 'priority_test'),
+    algorithmCommand('load round robin scenario', 'scenario', 'round_robin_test'),
+    algorithmCommand('load custom scenario', 'scenario', 'custom'),
 ]

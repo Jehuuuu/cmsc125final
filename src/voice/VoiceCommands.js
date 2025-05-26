@@ -3,7 +3,10 @@ import React, {useState, useEffect} from 'react';
 import SpeechRecognition, {useSpeechRecognition} from 'react-speech-recognition';
 import MicOn from '@mui/icons-material/MicNoneOutlined';
 import MicOff from '@mui/icons-material/MicOffOutlined';
+import VolumeUp from '@mui/icons-material/VolumeUp';
+import VolumeOff from '@mui/icons-material/VolumeOff';
 import {commands} from './commands';
+import './VoiceCommands.css';
 
 /**
  * 
@@ -15,6 +18,8 @@ const VoiceCommands = () => {
     const [isListening, setIsListening] = useState(false);
     const [willCall, setwillCall] = useState(false);
     const [script, setScript] = useState('');
+    const [currentTranscript, setCurrentTranscript] = useState('');
+    const [showTranscript, setShowTranscript] = useState(false);
 
     // use speech recognition hook
     const {
@@ -42,6 +47,21 @@ const VoiceCommands = () => {
         }
         synth.speak(utterance);
     };
+
+    // Update current transcript and show/hide indicator
+    useEffect(() => {
+        setCurrentTranscript(transcript);
+        if (transcript.trim()) {
+            setShowTranscript(true);
+            // Hide transcript after 3 seconds of no new speech
+            const timer = setTimeout(() => {
+                if (transcript === currentTranscript) {
+                    setShowTranscript(false);
+                }
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [transcript, currentTranscript]);
 
     /**
      * effect hook to handle transcript changes
@@ -109,19 +129,86 @@ const VoiceCommands = () => {
           SpeechRecognition.startListening({ autoStart: true, continuous: true });
       }, [listening]);
 
+    // Toggle listening state
+    const toggleListening = () => {
+        setIsListening(prevState => !prevState);
+    };
+
     // if browser does not support speech recognition 
     if (!browserSupportsSpeechRecognition) {
-        return <span>Browser doesn't support speech recognition.</span>;
+        return (
+            <div className="voice-commands-container">
+                <div className="voice-error">
+                    <span>Browser doesn't support speech recognition.</span>
+                </div>
+            </div>
+        );
     }
 
     //render the voice commands component 
     return (
-        <div>
-            <button onClick={() => setIsListening(prevState => !prevState)} className='mic'>
-                {isListening ?
-                <MicOn  /> : 
-                <MicOff  />}
-            </button>
+        <div className="voice-commands-container">
+            {/* Floating Speech Transcript Indicator */}
+            {showTranscript && currentTranscript.trim() && (
+                <div className={`speech-indicator ${listening ? 'listening' : ''}`}>
+                    <div className="speech-header">
+                        <VolumeUp className="speech-icon" />
+                        <span className="speech-label">Speech Detected</span>
+                    </div>
+                    <div className="speech-content">
+                        {currentTranscript || 'Listening...'}
+                    </div>
+                    {isListening && (
+                        <div className="speech-status">
+                            <span className="status-dot active"></span>
+                            <span>Command Mode Active</span>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Microphone Status Indicator */}
+            <div className={`mic-status-indicator ${listening ? 'active' : 'inactive'}`}>
+                <div className="mic-status-content">
+                    {listening ? (
+                        <>
+                            <VolumeUp className="status-icon listening" />
+                            <span className="status-text">Microphone On</span>
+                        </>
+                    ) : (
+                        <>
+                            <VolumeOff className="status-icon muted" />
+                            <span className="status-text">Microphone Off</span>
+                        </>
+                    )}
+                </div>
+                {listening && (
+                    <div className="listening-animation">
+                        <div className="wave wave1"></div>
+                        <div className="wave wave2"></div>
+                        <div className="wave wave3"></div>
+                    </div>
+                )}
+            </div>
+
+            {/* Main Microphone Button */}
+            <div className="mic-button-container">
+                <button 
+                    onClick={toggleListening} 
+                    className={`mic ${isListening ? 'listening' : ''} ${listening ? 'active' : ''}`}
+                    title={listening ? 'Microphone is active' : 'Microphone is off'}
+                >
+                    {listening ? <MicOn /> : <MicOff />}
+                </button>
+                
+                {/* Command Mode Indicator */}
+                {isListening && (
+                    <div className="command-mode-badge">
+                        <span className="pulse-dot"></span>
+                        Command Mode
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

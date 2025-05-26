@@ -16,6 +16,8 @@ import StatisticsDisplay from '../components/StatisticsDisplay';
 import TimelineDisplay from '../components/TimelineDisplay';
 import ProcessForm from '../components/ProcessForm';
 import AlgorithmSelector from '../components/AlgorithmSelector';
+import VoiceCommands from '../voice/VoiceCommands';
+import OSVoiceGuide from '../components/OSVoiceGuide';
 import './OSSimulation.css';
 
 const OSSimulation = () => {
@@ -270,6 +272,7 @@ const OSSimulation = () => {
                         <Card.Body>
                             <div className="mb-3">
                                 <Button 
+                                    id="os-add-process-btn"
                                     variant="primary" 
                                     onClick={() => setShowProcessForm(true)}
                                     disabled={isRunning}
@@ -342,50 +345,56 @@ const OSSimulation = () => {
                                     <div className="control-panel">
                                         <h6>Simulation Controls</h6>
                                         <div className="btn-group me-2" role="group">
-                                            <Button 
-                                                variant="success" 
-                                                onClick={handleStart}
-                                                disabled={isRunning && !isPaused}
-                                            >
-                                                <PlayArrowIcon /> Start
-                                            </Button>
-                                            <Button 
-                                                variant="warning" 
-                                                onClick={handlePause}
-                                                disabled={!isRunning || isPaused}
-                                            >
-                                                <PauseIcon /> Pause
-                                            </Button>
-                                            <Button 
-                                                variant="danger" 
-                                                onClick={handleStop}
-                                                disabled={!isRunning}
-                                            >
-                                                <StopIcon /> Stop
-                                            </Button>
+                                                                        <Button 
+                                id="os-start-btn"
+                                variant="success" 
+                                onClick={handleStart}
+                                disabled={isRunning && !isPaused}
+                            >
+                                <PlayArrowIcon /> Start
+                            </Button>
+                                                                        <Button 
+                                id="os-pause-btn"
+                                variant="warning" 
+                                onClick={handlePause}
+                                disabled={!isRunning || isPaused}
+                            >
+                                <PauseIcon /> Pause
+                            </Button>
+                                                                        <Button 
+                                id="os-stop-btn"
+                                variant="danger" 
+                                onClick={handleStop}
+                                disabled={!isRunning}
+                            >
+                                <StopIcon /> Stop
+                            </Button>
                                         </div>
                                         <div className="btn-group me-2" role="group">
-                                            <Button 
-                                                variant="info" 
-                                                onClick={handleStep}
-                                                disabled={autoRun || isSimulationComplete()}
-                                            >
-                                                <SkipNextIcon /> Step
-                                            </Button>
-                                            <Button 
-                                                variant={autoRun ? "danger" : "primary"} 
-                                                onClick={handleAutoRun}
-                                                disabled={isPaused || isSimulationComplete()}
-                                            >
-                                                {autoRun ? "Stop Auto" : "Auto Run"}
-                                            </Button>
+                                                                        <Button 
+                                id="os-step-btn"
+                                variant="info" 
+                                onClick={handleStep}
+                                disabled={autoRun || isSimulationComplete()}
+                            >
+                                <SkipNextIcon /> Step
+                            </Button>
+                                                                        <Button 
+                                id="os-auto-btn"
+                                variant={autoRun ? "danger" : "primary"} 
+                                onClick={handleAutoRun}
+                                disabled={isPaused || isSimulationComplete()}
+                            >
+                                {autoRun ? "Stop Auto" : "Auto Run"}
+                            </Button>
                                         </div>
-                                        <Button 
-                                            variant="secondary" 
-                                            onClick={handleReset}
-                                        >
-                                            Reset
-                                        </Button>
+                                                                <Button 
+                            id="os-reset-btn"
+                            variant="secondary" 
+                            onClick={handleReset}
+                        >
+                            Reset
+                        </Button>
                                     </div>
                                 </Col>
                                 <Col md={6}>
@@ -467,9 +476,16 @@ const OSSimulation = () => {
                     1. Add custom processes or use default scenario<br/>
                     2. Use controls to start, pause, step through, or auto-run the simulation<br/>
                     3. Watch how processes move through queues and how memory is managed<br/>
-                    4. Monitor statistics and logs for detailed analysis
+                    4. Monitor statistics and logs for detailed analysis<br/>
+                    5. Use voice commands by saying "Honey" + command + "please"
                 </p>
             </Alert>
+
+            {/* Voice Commands Guide */}
+            <OSVoiceGuide />
+
+            {/* Voice Commands */}
+            <VoiceCommands />
         </Container>
     );
 };
