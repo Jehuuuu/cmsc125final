@@ -3,7 +3,6 @@ import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import './App.css';
 import Main from './pages/Main';
-import Schedule from './pages/Schedule';
 import IDE from './pages/IDE';
 import OSSimulation from './pages/OSSimulation';
 import LandingPage from './pages/LandingPage';
@@ -45,10 +44,10 @@ function App() {
       <Router> {/** set up the routes */}
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/schedule" element={<Schedule />} />
           <Route path="/simulation" element={<Main />} />
           <Route path="/ide" element={<IDE />} />
           <Route path="/os-simulation" element={<OSSimulation />} />
+          <Route path="/schedule" element={<Navigate to="/simulation" replace />} />
         </Routes>
       </Router>
     </div>

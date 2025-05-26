@@ -1,3 +1,8 @@
+// ****************************************************************
+// DEPRECATED - This file is no longer used. Please use the commands 
+// from src/voice/ide-commands.js instead.
+// ****************************************************************
+
 import { cleanInputForId } from "../../utils/ideUtils";
 
 /**

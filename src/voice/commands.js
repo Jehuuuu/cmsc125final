@@ -1,5 +1,7 @@
 // Import the toast component
 import toast from 'react-hot-toast';
+// Import IDE commands
+import { ideCommands } from './ide-commands';
 
 /** 
  * This function creates a command object with a name and a callback function.
@@ -296,4 +298,7 @@ export const commands = [
     algorithmCommand('load priority scenario', 'scenario', 'priority_test'),
     algorithmCommand('load round robin scenario', 'scenario', 'round_robin_test'),
     algorithmCommand('load custom scenario', 'scenario', 'custom'),
+
+    // Include all IDE commands
+    ...ideCommands
 ]

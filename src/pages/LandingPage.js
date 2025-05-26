@@ -33,11 +33,11 @@ function LandingPage() {
 
           <button 
             className="menu-button scheduler-button"
-            onClick={() => handleNavigation('/schedule')}
+            onClick={() => handleNavigation('/simulation')}
           >
             <div className="button-icon">⏰</div>
             <div className="button-text">
-              <h3>Old CPU Scheduler</h3>
+              <h3>CPU Scheduler</h3>
               <p>Process scheduling algorithms</p>
             </div>
           </button>

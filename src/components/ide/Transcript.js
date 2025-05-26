@@ -1,3 +1,8 @@
+// ****************************************************************
+// DEPRECATED - This file is no longer used. The newer VoiceCommands component 
+// from src/voice/VoiceCommands.js uses a different UI approach.
+// ****************************************************************
+
 // import necessary hooks from React
 import React, { useState, useEffect } from 'react';
 

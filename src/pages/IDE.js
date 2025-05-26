@@ -5,7 +5,7 @@ import Guide from '../components/ide/Guide';
 import Menubar from '../components/ide/Menubar';
 import Toolbar from '../components/ide/Toolbar';
 import Tabbar from '../components/ide/Tabbar';
-import VoiceCommands from '../components/ide/VoiceCommands';
+import VoiceCommands from '../voice/VoiceCommands';
 import WelcomeScreen from '../components/ide/WelcomeScreen';
 import HeaderImg from '../images/ide/header.png';
 import { LOCAL_STORAGE_KEYS, getLocalStorageItem, setLocalStorageItem } from '../utils/ideUtils';
@@ -13,6 +13,7 @@ import { TabProvider } from '../utils/TabContext';
 import { EditorProvider } from '../utils/EditorContext';
 import { useNavigate } from 'react-router-dom';
 import Tooltip from '@mui/material/Tooltip';
+import '../voice/VoiceCommands.css';
 
 /**
  * 
@@ -21,9 +22,9 @@ import Tooltip from '@mui/material/Tooltip';
 function IDE() {
   const navigate = useNavigate();
   
-  // Function to navigate back to scheduling
+  // Function to navigate back to landing page
   const handleBackToScheduling = () => {
-    navigate('/schedule');
+    navigate('/');
   };
 
   // a react hook component to set the initial file content and file list
@@ -69,15 +70,15 @@ function IDE() {
     <div className="ide-container">
       {/* holds the left components of the screen */}
       <div className='ide-left-component'>
-        {/* logo - made clickable to return to scheduling */}
+        {/* logo - made clickable to return to home */}
         <div 
           className="logo-container" 
           onClick={handleBackToScheduling}
           role="button"
-          aria-label="Back to Scheduling"
+          aria-label="Back to Home"
           tabIndex={0}
         >
-          <Tooltip title="Back to Scheduling" arrow placement="right">
+          <Tooltip title="Back to Home" arrow placement="right">
             <img src={HeaderImg} alt="darling" className='ide-logo' />
           </Tooltip>
         </div>
@@ -98,10 +99,10 @@ function IDE() {
             <div className="content-container">
               <Tabbar />
             </div>
-
-            {/* voice commands remain outside the containers */}
-          <VoiceCommands />
         </div>
+        
+        {/* Voice commands component */}
+        <VoiceCommands />
     </div>
       </TabProvider>
     </EditorProvider>

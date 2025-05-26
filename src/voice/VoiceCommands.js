@@ -1,5 +1,5 @@
 //import used libraries and components
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import SpeechRecognition, {useSpeechRecognition} from 'react-speech-recognition';
 import MicOn from '@mui/icons-material/MicNoneOutlined';
 import MicOff from '@mui/icons-material/MicOffOutlined';
@@ -7,6 +7,44 @@ import VolumeUp from '@mui/icons-material/VolumeUp';
 import VolumeOff from '@mui/icons-material/VolumeOff';
 import {commands} from './commands';
 import './VoiceCommands.css';
+import toast from 'react-hot-toast';
+
+// Helper function to check if a command is contained in a transcript
+// This is more lenient than just using includes()
+const commandMatches = (transcript, commandText) => {
+    // Exact match
+    if (transcript.includes(commandText)) {
+        return true;
+    }
+    
+    // Remove spaces and check
+    const noSpaceTranscript = transcript.replace(/\s+/g, '');
+    const noSpaceCommand = commandText.replace(/\s+/g, '');
+    if (noSpaceTranscript.includes(noSpaceCommand)) {
+        return true;
+    }
+    
+    // Check for variations with word boundaries
+    const words = commandText.split(' ');
+    if (words.length > 1) {
+        // Check if all words appear in the transcript in the correct order
+        let lastIndex = -1;
+        const allWordsFound = words.every(word => {
+            const index = transcript.indexOf(word, lastIndex + 1);
+            if (index > lastIndex) {
+                lastIndex = index;
+                return true;
+            }
+            return false;
+        });
+        
+        if (allWordsFound) {
+            return true;
+        }
+    }
+    
+    return false;
+};
 
 /**
  * 
@@ -20,6 +58,9 @@ const VoiceCommands = () => {
     const [script, setScript] = useState('');
     const [currentTranscript, setCurrentTranscript] = useState('');
     const [showTranscript, setShowTranscript] = useState(false);
+    const [isSpeaking, setIsSpeaking] = useState(false);
+    const commandTimeoutRef = useRef(null);
+    const pendingResponseRef = useRef(null);
 
     // use speech recognition hook
     const {
@@ -29,39 +70,150 @@ const VoiceCommands = () => {
         browserSupportsSpeechRecognition
     } = useSpeechRecognition();
 
-    // function to speak the text
+    // function to speak the text with speech recognition pause
     const speak = (text) => {
-        const synth = window.speechSynthesis;
-        const utterance = new SpeechSynthesisUtterance(text);
-        // Get an array of available voices
-        const voices = synth.getVoices();
-        
-        // Find the voice by name (for example, 'Google UK English Female')
-        const selectedVoice = voices.find(voice => voice.name === 'Microsoft Zira - English (United States)');
-        
-        // If the selected voice is found, set it
-        if (selectedVoice) {
-            utterance.voice = selectedVoice;
-        } else {
-            console.error('Voice not found');
+        try {
+            // Set speaking state to true to prevent processing own speech
+            setIsSpeaking(true);
+            
+            // Temporarily stop speech recognition while speaking
+            SpeechRecognition.stopListening();
+            
+            const synth = window.speechSynthesis;
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            // Cancel any ongoing speech
+            synth.cancel();
+            
+            // For debugging
+            console.log("Speaking:", text);
+            
+            // Force a more reliable way to get voices
+            let voices = synth.getVoices();
+            
+            // If voices aren't loaded yet, wait a bit and try again
+            if (!voices || voices.length === 0) {
+                setTimeout(() => {
+                    voices = synth.getVoices();
+                    if (voices && voices.length > 0) {
+                        const selectedVoice = voices.find(voice => 
+                            voice.name === 'Microsoft Zira - English (United States)' || 
+                            voice.name.includes('Female') || 
+                            voice.name.includes('Google')
+                        ) || voices[0];
+                        
+                        utterance.voice = selectedVoice;
+                        console.log("Using voice:", selectedVoice?.name || "default");
+                    } else {
+                        console.warn("No voices available, using default");
+                    }
+                    
+                    finishAndSpeak();
+                }, 100);
+            } else {
+                // Try to find the preferred voice or fallback to any available voice
+                const selectedVoice = voices.find(voice => 
+                    voice.name === 'Microsoft Zira - English (United States)' || 
+                    voice.name.includes('Female') || 
+                    voice.name.includes('Google')
+                ) || voices[0];
+                
+                if (selectedVoice) {
+                    utterance.voice = selectedVoice;
+                    console.log("Using voice:", selectedVoice.name);
+                }
+                
+                finishAndSpeak();
+            }
+            
+            function finishAndSpeak() {
+                // Set other properties
+                utterance.volume = 1;
+                utterance.rate = 1;
+                utterance.pitch = 1;
+                
+                // Handle when speech ends - resume listening
+                utterance.onend = () => {
+                    // Add a small delay before resuming to ensure system doesn't hear echo
+                    setTimeout(() => {
+                        setIsSpeaking(false);
+                        
+                        // Clear the transcript to avoid capturing system speech
+                        resetTranscript();
+                        
+                        // Resume listening
+                        SpeechRecognition.startListening({ autoStart: true, continuous: true });
+                        
+                        // Execute any pending response
+                        if (pendingResponseRef.current) {
+                            pendingResponseRef.current();
+                            pendingResponseRef.current = null;
+                        }
+                    }, 300);
+                };
+                
+                // Handle speech errors
+                utterance.onerror = (event) => {
+                    console.error("Speech synthesis error:", event);
+                    setIsSpeaking(false);
+                    resetTranscript();
+                    SpeechRecognition.startListening({ autoStart: true, continuous: true });
+                };
+                
+                // Actually speak
+                synth.speak(utterance);
+                
+                // Fallback in case onend doesn't fire
+                setTimeout(() => {
+                    if (isSpeaking) {
+                        setIsSpeaking(false);
+                        resetTranscript();
+                        SpeechRecognition.startListening({ autoStart: true, continuous: true });
+                    }
+                }, 5000); // 5 second safety timeout
+            }
+        } catch (error) {
+            console.error("Speech error:", error);
+            setIsSpeaking(false);
+            resetTranscript();
+            SpeechRecognition.startListening({ autoStart: true, continuous: true });
+            toast.error("Speech synthesis failed");
         }
-        synth.speak(utterance);
     };
+
+    // Initialize speech synthesis voices
+    useEffect(() => {
+        const synth = window.speechSynthesis;
+        
+        // Some browsers need this event to load voices
+        if (synth.onvoiceschanged !== undefined) {
+            synth.onvoiceschanged = () => {
+                console.log("Voices loaded:", synth.getVoices().length);
+            };
+        }
+        
+        // Try to get voices initially
+        const voices = synth.getVoices();
+        console.log("Initial voices:", voices.length);
+    }, []);
 
     // Update current transcript and show/hide indicator
     useEffect(() => {
-        setCurrentTranscript(transcript);
-        if (transcript.trim()) {
-            setShowTranscript(true);
-            // Hide transcript after 3 seconds of no new speech
-            const timer = setTimeout(() => {
-                if (transcript === currentTranscript) {
-                    setShowTranscript(false);
-                }
-            }, 3000);
-            return () => clearTimeout(timer);
+        // Only update transcript if not currently speaking
+        if (!isSpeaking) {
+            setCurrentTranscript(transcript);
+            if (transcript.trim()) {
+                setShowTranscript(true);
+                // Hide transcript after 3 seconds of no new speech
+                const timer = setTimeout(() => {
+                    if (transcript === currentTranscript) {
+                        setShowTranscript(false);
+                    }
+                }, 3000);
+                return () => clearTimeout(timer);
+            }
         }
-    }, [transcript, currentTranscript]);
+    }, [transcript, currentTranscript, isSpeaking]);
 
     /**
      * effect hook to handle transcript changes
@@ -69,69 +221,149 @@ const VoiceCommands = () => {
      * and saves it as script for the toaster to display
      */
     useEffect(() => {
+        // Don't process commands while the system is speaking
+        if (isSpeaking) return;
+        
+        // Store the transcript in localStorage for the "type this" command
+        localStorage.setItem('voice_transcript', transcript);
 
-        if(transcript.includes('honey')) {
+        if(transcript.toLowerCase().includes('honey')) {
+            // Clear any existing command timeout
+            if (commandTimeoutRef.current) {
+                clearTimeout(commandTimeoutRef.current);
+            }
+            
             setIsListening(true);
             setwillCall(true);
-            console.log("willCall honey", willCall)
             resetTranscript();
+            
+            // Speak the response but pause speech recognition
             speak("Yes, my love?");
+            
+            // Set timeout to exit command mode if no command is given within 10 seconds
+            commandTimeoutRef.current = setTimeout(() => {
+                if (isListening) {
+                    setIsListening(false);
+                    setwillCall(false);
+                    speak("Command mode deactivated due to inactivity.");
+                }
+            }, 10000);
         }
 
-        if (transcript.includes('please')) {
-            setIsListening(false);
-            console.log("isListening please", isListening)
-            setScript(transcript.replace('please', '').toLowerCase());
+        if (transcript.toLowerCase().includes('please')) {
+            // Clear the command timeout
+            if (commandTimeoutRef.current) {
+                clearTimeout(commandTimeoutRef.current);
+                commandTimeoutRef.current = null;
+            }
+            
+            // Better command extraction - get everything between "honey" and "please"
+            const lowerTranscript = transcript.toLowerCase();
+            let command = lowerTranscript;
+            
+            // Try to extract the part between honey and please
+            const honeyIndex = lowerTranscript.indexOf('honey');
+            const pleaseIndex = lowerTranscript.indexOf('please');
+            
+            if (honeyIndex !== -1 && pleaseIndex !== -1 && honeyIndex < pleaseIndex) {
+                // Extract between honey and please
+                command = lowerTranscript.substring(honeyIndex + 5, pleaseIndex).trim();
+                console.log("Extracted command:", command);
+            } else {
+                // Just remove please
+                command = lowerTranscript.replace('please', '').trim();
+                console.log("Simple command (no honey found):", command);
+            }
+            
+            // Set a pending action to execute after speech response finishes
+            pendingResponseRef.current = () => {
+                setIsListening(false);
+                setScript(command);
+            };
+            
+            // Speak confirmation before processing command
             speak("Okay, my love.");
-            resetTranscript();
         }
         
-        console.log("transcript: " , transcript);
+    }, [transcript, resetTranscript, isListening, willCall, isSpeaking]);
 
-    }, [transcript, resetTranscript, isListening, willCall]);
-
+    // Clean up the timeout when component unmounts
     useEffect(() => {
-        if (transcript.includes('hi')) {
-            speak("hello, my love.");
-            resetTranscript();
-        }
-
-        if (transcript.includes('simulate') && transcript.endsWith('please')){
-            speak("Are you sure you want to switch the current scheduling policy, my love?");
-        }
-
-    }, [transcript])
+        return () => {
+            if (commandTimeoutRef.current) {
+                clearTimeout(commandTimeoutRef.current);
+            }
+        };
+    }, []);
 
     /**
      * takes the script in between 'honey' and 'please' 
      * and executes the command present in command.js.
      */
     useEffect(() => {
+        if (!script) return;
+        
+        console.log("Processing script:", script);
+        console.log("Available commands:", commands.map(c => c.command).join(", "));
+        
+        let commandExecuted = false;
         commands.forEach(({ command, callback }) => {
-          if (script.toLowerCase().includes(command)) {
-            console.log("callback() ", willCall)
-            if (willCall){       
-                callback();
+            if (commandMatches(script.toLowerCase(), command)) {
+                console.log("Command matched:", command);
+                if (willCall) {       
+                    callback();
+                    setwillCall(false);
+                    commandExecuted = true;
+                    console.log("Command executed:", command);
+                } else {
+                    console.log("Command not executed because willCall is false");
+                }
+            }
+        });
+        
+        if (!commandExecuted && script) {
+            // If no command matched but we have a script, provide feedback
+            if (!isSpeaking) {
+                console.log("Command not recognized:", script);
+                speak("I'm sorry, I didn't recognize that command.");
+                
+                // Reset all voice command states
                 setwillCall(false);
-                console.log("false dapat() ", willCall)
+                setIsListening(false);
+                
+                // Clear any active timeouts
+                if (commandTimeoutRef.current) {
+                    clearTimeout(commandTimeoutRef.current);
+                    commandTimeoutRef.current = null;
+                }
             }
         }
-        });
-    }, [script]);
+        
+        // Clear the script after processing to prevent loops
+        setScript('');
+        
+    }, [script, willCall, isSpeaking]);
 
     /**
      * effect hook to start listening for the user's voice input (if not listening only)
-     * autostart set to tru to start listening automatically on page load
+     * autostart set to true to start listening automatically on page load
      * continuous set to true to keep listening
      */
     useEffect(() => {
-        if(!listening) 
+        // Only start listening if not currently speaking
+        if(!listening && !isSpeaking) 
           SpeechRecognition.startListening({ autoStart: true, continuous: true });
-      }, [listening]);
+      }, [listening, isSpeaking]);
 
     // Toggle listening state
     const toggleListening = () => {
         setIsListening(prevState => !prevState);
+        
+        if (!isListening) {
+            speak("Voice commands activated.");
+        } else {
+            speak("Voice commands deactivated.");
+        }
     };
 
     // if browser does not support speech recognition 
@@ -168,12 +400,21 @@ const VoiceCommands = () => {
             )}
 
             {/* Microphone Status Indicator */}
-            <div className={`mic-status-indicator ${listening ? 'active' : 'inactive'}`}>
+            <div className={`mic-status-indicator ${listening ? 'active' : 'inactive'} ${isSpeaking ? 'speaking' : ''}`}>
                 <div className="mic-status-content">
                     {listening ? (
                         <>
-                            <VolumeUp className="status-icon listening" />
-                            <span className="status-text">Microphone On</span>
+                            {isSpeaking ? (
+                                <>
+                                    <VolumeUp className="status-icon speaking" />
+                                    <span className="status-text">Speaking...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <VolumeUp className="status-icon listening" />
+                                    <span className="status-text">Microphone On</span>
+                                </>
+                            )}
                         </>
                     ) : (
                         <>
@@ -182,7 +423,7 @@ const VoiceCommands = () => {
                         </>
                     )}
                 </div>
-                {listening && (
+                {listening && !isSpeaking && (
                     <div className="listening-animation">
                         <div className="wave wave1"></div>
                         <div className="wave wave2"></div>
@@ -195,8 +436,9 @@ const VoiceCommands = () => {
             <div className="mic-button-container">
                 <button 
                     onClick={toggleListening} 
-                    className={`mic ${isListening ? 'listening' : ''} ${listening ? 'active' : ''}`}
+                    className={`mic ${isListening ? 'listening' : ''} ${listening ? 'active' : ''} ${isSpeaking ? 'speaking' : ''}`}
                     title={listening ? 'Microphone is active' : 'Microphone is off'}
+                    disabled={isSpeaking}
                 >
                     {listening ? <MicOn /> : <MicOff />}
                 </button>

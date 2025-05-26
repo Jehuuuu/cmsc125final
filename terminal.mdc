@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+When working with terminal commands always remember we are using powershell by default so your set of commands should be powershell friendly and ready so that we wont waate some time on terminal errors.
