@@ -1,10 +1,13 @@
 // Importing necessary hooks and modules from react, react-router-dom, and react-hot-toast
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import toast from 'react-hot-toast';
 
 // Importing necessary icons and styles
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
+import StopIcon from '@mui/icons-material/Stop';
 import './Main.css';
 
 // Importing necessary components
@@ -50,6 +53,11 @@ export default function Main() {
     // State for job queue
     const [jobQueue, setJobQueue] = useState(0)
 
+    // Simulation control states
+    const [simulationState, setSimulationState] = useState('stopped'); // 'playing', 'paused', 'stopped'
+    const [isSimulationRunning, setIsSimulationRunning] = useState(false);
+    const intervalRef = useRef(null);
+
     const policies = [ // list of scheduling policies
         'First Come, First Serve',
         'Shortest Job First',
@@ -57,8 +65,68 @@ export default function Main() {
         'Round Robin',
   ];
 
+    /*<-------------- SIMULATION CONTROL FUNCTIONS -------------->*/
+    
+    // Start or resume simulation
+    const playSimulation = () => {
+        if (simulationState === 'stopped') {
+            // Starting fresh simulation
+            setSimulationState('playing');
+            setIsSimulationRunning(true);
+            toast.success('Simulation started');
+        } else if (simulationState === 'paused') {
+            // Resuming paused simulation
+            setSimulationState('playing');
+            setIsSimulationRunning(true);
+            toast.success('Simulation resumed');
+        }
+    };
 
-    /*<-------------- FUNCTIONS -------------->*/
+    // Pause simulation
+    const pauseSimulation = () => {
+        if (simulationState === 'playing') {
+            setSimulationState('paused');
+            setIsSimulationRunning(false);
+            toast('Simulation paused');
+        }
+    };
+
+    // Stop simulation and reset
+    const stopSimulation = async () => {
+        setSimulationState('stopped');
+        setIsSimulationRunning(false);
+        setTime(0);
+        
+        // Clear all processes and reset memory
+        await deleteAllRows("pcb");
+        await deleteAllRows("queue");
+        await deleteAllRows("memory");
+        
+        // Reset memory to initial state
+        var segment = {
+            block_size: 24,
+            row_id:"",
+            location: 0,
+            process_id: "",
+            job_size: "",
+            status: "Free",
+            fragmentation: "None",
+            splittable: true
+        }
+        await addRow(segment, "memory");
+        
+        // Reset statistics
+        setAvgTime({
+            total_time: 0,
+            total_rows: 0,
+            avg_time: 0
+        });
+        setCurrProcess({});
+        
+        toast.error('Simulation stopped and reset');
+    };
+
+    /*<-------------- EXISTING FUNCTIONS -------------->*/
     // fetch data to display
     useEffect(() => {
       async function fetchData() {
@@ -102,9 +170,7 @@ export default function Main() {
 
         allRows.forEach(async row => {
             row.waiting_time += 1;
-
             row.steps = 0;
-            
             await editRow(row, "pcb");
         })
     }
@@ -121,36 +187,48 @@ export default function Main() {
             }
             
             item.steps = 0;
-
             await editRow(item, "pcb");
         })
     }
 
-    // time interval component
+    // Modified time interval component - now controlled by simulation state
     useEffect(() => {
-      const interval = setInterval(async () => {
-            if(selectedPolicy === "First Come, First Serve") {
-                FCFS();
-            } else if(selectedPolicy === "Shortest Job First") {
-                SJF();
-            } else if(selectedPolicy === "Priority") {
-                Priority();
-            } else if(selectedPolicy === "Round Robin") { 
-                RoundRobin()
+        if (isSimulationRunning) {
+            intervalRef.current = setInterval(async () => {
+                if(selectedPolicy === "First Come, First Serve") {
+                    FCFS();
+                } else if(selectedPolicy === "Shortest Job First") {
+                    SJF();
+                } else if(selectedPolicy === "Priority") {
+                    Priority();
+                } else if(selectedPolicy === "Round Robin") { 
+                    RoundRobin()
+                }
+            
+                // increment waiting time per interval
+                changeWaitTime();
+
+                // decrement io time per interval
+                changeIOTime();
+
+              setTime(time => time + 1)
+              
+            }, 3000);
+        } else {
+            // Clear interval when simulation is not running
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
             }
-        
-            // increment waiting time per interval
-            changeWaitTime();
+        }
 
-            // decrement io time per interval
-            changeIOTime();
-
-          setTime(time => time + 1)
-          
-        }, 3000);
-    
-        return () => clearInterval(interval);
-    }, []); 
+        // Cleanup function
+        return () => {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+        };
+    }, [isSimulationRunning, selectedPolicy]); 
 
     // io calculations
     useEffect(() => {
@@ -170,117 +248,142 @@ export default function Main() {
         updateIOEvent();
     }, [data]);
 
-  function isEmptyObject(obj) {
-    return Object.keys(obj).length === 0 && obj.constructor === Object;
-  }
+    function isEmptyObject(obj) {
+        return Object.keys(obj).length === 0 && obj.constructor === Object;
+    }
+
     // Job Queue - Memory Calculations
-  async function checkJobQueue() {
-    // get jobQueues
-    var queue = await getRows("queue")
-    // Set JobQueue to change badge status
-    setJobQueue(queue.length)
-    
-    var i = 0;
-    // for each queue, search memory space to
-    while (i < queue.length) {
-      const memory = await filterRows("status", "Free", "memory")
-      var job = queue[i]
-      var smallestFragmentation = {}
-        for (var idx = 0; idx < memory.length; idx++){
-          var currMemory = memory[idx]
-          if (isEmptyObject(smallestFragmentation) && currMemory.splittable && currMemory.block_size >= job.memory_size) {
-            // Split the segment
-            if (parseInt(currMemory.block_size) - parseInt(job.memory_size) > 0) {
-              var remainingSegment = {
-                process_id: "",
-                job_size: "",
-                row_id: "",
-                status: "Free",
-                Fragmentation: "None",
-                block_size: parseInt(currMemory.block_size) - parseInt(job.memory_size),
-                splittable: true
+    async function checkJobQueue() {
+        // get jobQueues
+        var queue = await getRows("queue")
+        // Set JobQueue to change badge status
+        setJobQueue(queue.length)
+        
+        var i = 0;
+        // for each queue, search memory space to
+        while (i < queue.length) {
+          const memory = await filterRows("status", "Free", "memory")
+          var job = queue[i]
+          var smallestFragmentation = {}
+            for (var idx = 0; idx < memory.length; idx++){
+              var currMemory = memory[idx]
+              if (isEmptyObject(smallestFragmentation) && currMemory.splittable && currMemory.block_size >= job.memory_size) {
+                // Split the segment
+                if (parseInt(currMemory.block_size) - parseInt(job.memory_size) > 0) {
+                  var remainingSegment = {
+                    process_id: "",
+                    job_size: "",
+                    row_id: "",
+                    status: "Free",
+                    Fragmentation: "None",
+                    block_size: parseInt(currMemory.block_size) - parseInt(job.memory_size),
+                    splittable: true
+                  }
+                  // add to memory and pcb, delete it from queue
+                    await addRow(remainingSegment, "memory")
+                }
+                
+                // Create another segment
+                var segment = {
+                  id: currMemory.id,
+                  block_size: parseInt(job.memory_size),              
+                  process_id: job.process_id,
+                  row_id: job.id,
+                  job_size: parseInt(job.memory_size),
+                  status: "Busy",
+                  fragmentation: 0,
+                  splittable: false
+                }
+                await addRow(job, "pcb")
+                await deleteRow(job.id, "queue")
+                await editRow(segment, "memory")
+                queue = await getRows("queue");
+                i--
+
+                break;
+              } else if(currMemory.block_size >= job.memory_size) {
+                var fragmentation = memory[idx].block_size - job.memory_size
+                if(isEmptyObject(smallestFragmentation) || fragmentation < smallestFragmentation.fragmentation) {
+                  smallestFragmentation = memory[idx]
+                  smallestFragmentation.fragmentation = fragmentation
+                  smallestFragmentation.process_id = job.process_id
+                  smallestFragmentation.row_id = job.id
+                  smallestFragmentation.job_size = job.memory_size
+                  smallestFragmentation.status = "Busy"
+                } else {
+                  continue
+                }
               }
-              // add to memory and pcb, delete it from queue
-                await addRow(remainingSegment, "memory")
             }
-            
-            // Create another segment
-            var segment = {
-              id: currMemory.id,
-              block_size: parseInt(job.memory_size),              
-              process_id: job.process_id,
-              row_id: job.id,
-              job_size: parseInt(job.memory_size),
-              status: "Busy",
-              fragmentation: 0,
-              splittable: false
+            if (!isEmptyObject(smallestFragmentation)) {
+              await editRow(smallestFragmentation, "memory")
+              await addRow(job, "pcb")
+              await deleteRow(job.id, "queue")
+              queue = await getRows("queue");
+              i--
             }
-            await addRow(job, "pcb")
-            await deleteRow(job.id, "queue")
-            await editRow(segment, "memory")
-            queue = await getRows("queue");
-            i--
 
-            break;
-          } else if(currMemory.block_size >= job.memory_size) {
-            var fragmentation = memory[idx].block_size - job.memory_size
-            if(isEmptyObject(smallestFragmentation) || fragmentation < smallestFragmentation.fragmentation) {
-              smallestFragmentation = memory[idx]
-              smallestFragmentation.fragmentation = fragmentation
-              smallestFragmentation.process_id = job.process_id
-              smallestFragmentation.row_id = job.id
-              smallestFragmentation.job_size = job.memory_size
-              smallestFragmentation.status = "Busy"
-            } else {
-              continue
-            }
-          }
+            i++
         }
-        if (!isEmptyObject(smallestFragmentation)) {
-          await editRow(smallestFragmentation, "memory")
-          await addRow(job, "pcb")
-          await deleteRow(job.id, "queue")
-          queue = await getRows("queue");
-          i--
+        // Check if there is a need for compaction
+        const remainingQueue = await getRows("queue")
+        const currentMem = await filterRows("status", "Free", "memory")
+
+        if (remainingQueue.length > 0 && currentMem.length > 1) {
+          // perform compaction
+          await startCompaction()
         }
+    } 
 
+    async function startCompaction() {
+         // get all free
+        const memory = await filterRows("status", "Free", "memory")
+        // combine - add block size
+        const combinedSum = getSum(memory)
+        // create new segment with the sum of block size
+        var combinedSegment = {
+          process_id: "",
+          job_size: "",
+          row_id:"",
+          status: "Free",
+          Fragmentation: null,
+          block_size: combinedSum,
+          splittable: true
+        }
+        await addRow(combinedSegment, "memory")
+        // delete all free
+        for (var idx = 0; idx < memory.length; idx++){
+          await deleteRow(memory[idx].id, "memory")
+        }
+    }
 
-        i++
-    }
-    // Check if there is a need for compaction
-    const remainingQueue = await getRows("queue")
-    const currentMem = await filterRows("status", "Free", "memory")
-
-    if (remainingQueue.length > 0 && currentMem.length > 1) {
-      // perform compaction
-      await startCompaction()
-    }
-
-  } 
-  async function startCompaction() {
-     // get all free
-    const memory = await filterRows("status", "Free", "memory")
-    // combine - add block size
-    const combinedSum = getSum(memory)
-    // create new segment with the sum of block size
-    var combinedSegment = {
-      process_id: "",
-      job_size: "",
-      row_id:"",
-      status: "Free",
-      Fragmentation: null,
-      block_size: combinedSum,
-      splittable: true
-    }
-    await addRow(combinedSegment, "memory")
-    // delete all free
-    for (var idx = 0; idx < memory.length; idx++){
-      await deleteRow(memory[idx].id, "memory")
-    }
-  }
     useEffect(() => {
       (async () => await checkJobQueue())()
     },[jsonData])
+
+    // Initialize simulation on component mount
+    useEffect(() => {
+        const initializeSimulation = async () => {
+            if (simulationState === 'stopped') {
+                await deleteAllRows("pcb");
+                await deleteAllRows("queue");
+                await deleteAllRows("memory");
+                var segment = {
+                    block_size: 24,
+                    row_id:"",
+                    location: 0,
+                    process_id: "",
+                    job_size: "",
+                    status: "Free",
+                    fragmentation: "None",
+                    splittable: true
+                }
+                await addRow(segment, "memory")
+            }
+        };
+        
+        initializeSimulation();
+    }, []);
 
     return (
         <div className="main">
@@ -303,6 +406,49 @@ export default function Main() {
                     })}
                 </div>
 
+                {/* Simulation Controls */}
+                <div className="simulation-controls">
+                    <button 
+                        className={`control-btn play-btn ${simulationState === 'playing' ? 'active' : ''}`}
+                        onClick={playSimulation}
+                        disabled={simulationState === 'playing'}
+                        title="Play/Resume Simulation"
+                    >
+                        <PlayArrowIcon />
+                        {simulationState === 'paused' ? 'Resume' : 'Play'}
+                    </button>
+                    
+                    <button 
+                        className={`control-btn pause-btn ${simulationState === 'paused' ? 'active' : ''}`}
+                        onClick={pauseSimulation}
+                        disabled={simulationState !== 'playing'}
+                        title="Pause Simulation"
+                    >
+                        <PauseIcon />
+                        Pause
+                    </button>
+                    
+                    <button 
+                        className="control-btn stop-btn"
+                        onClick={stopSimulation}
+                        disabled={simulationState === 'stopped'}
+                        title="Stop and Reset Simulation"
+                    >
+                        <StopIcon />
+                        Stop
+                    </button>
+                    
+                    <div className="simulation-status">
+                        <span className={`status-indicator ${simulationState}`}></span>
+                        <span className="status-text">
+                            {simulationState === 'playing' && 'Running'}
+                            {simulationState === 'paused' && 'Paused'}
+                            {simulationState === 'stopped' && 'Stopped'}
+                        </span>
+                        <span className="time-display"> | Time: {time}</span>
+                    </div>
+                </div>
+
                 {/* info */}
                 <InfoOutlined className="info" onClick={() => setOpenInfo(true)} />
                 <Policy policy={selectedPolicy} open={openInfo} close={() => setOpenInfo(false)} />
@@ -310,14 +456,18 @@ export default function Main() {
 
             {/* simulation */}
             <div className="sim-cont mt-3">
-                {/* <h6>Current Time: {time}</h6> */}
                 <Simulation avgTime={avgTime.avg_time} />
             </div>
 
             {/* PCB */}
             <div className="pcb-cont cont-template">
                 {/* PCB header */}
-                <Header time={time} policy={selectedPolicy} jobQueue={jobQueue} />
+                <Header 
+                    time={time} 
+                    policy={selectedPolicy} 
+                    jobQueue={jobQueue}
+                    simulationState={simulationState}
+                />
 
                 {/* PCB table */}
                 <TableHeader data={data} policy={selectedPolicy} />
