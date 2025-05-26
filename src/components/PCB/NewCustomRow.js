@@ -37,6 +37,24 @@ export default function NewCustomRow(props) {
 
     // Asynchronous function to add a new row to the PCB
     async function addNewRow() {
+        // Check if simulation is stopped
+        if (props.simulationState === 'stopped') {
+            alert('Cannot add process while simulation is stopped. Please start the simulation first.');
+            props.hide();
+            return;
+        }
+
+        // Validate input values
+        if (row.burst_time <= 0 || row.memory_size <= 0) {
+            alert('Burst time and memory size must be greater than 0');
+            return;
+        }
+
+        if (row.memory_size > 24) {
+            alert('Memory size cannot exceed 24 units (total available memory)');
+            return;
+        }
+
         row.waiting_time = 0;   // Set initial waiting time
         row.init_burst = row.burst_time;    // Set initial burst time
         row.io_when = Math.floor(Math.random() * (row.burst_time - 1)) + 1;  // Set random io event
@@ -57,7 +75,14 @@ export default function NewCustomRow(props) {
     return (
         // The component returns a modal for adding a custom row
         <Modal dialogClassName="custom-row" show={props.show} onHide={props.hide} centered>
-            <Modal.Header>Add Custom Row</Modal.Header>
+            <Modal.Header>
+                <Modal.Title>Add Custom Process</Modal.Title>
+                {props.simulationState === 'stopped' && (
+                    <div style={{color: '#dc3545', fontSize: '0.875rem', marginTop: '0.5rem'}}>
+                        ⚠️ Simulation must be running to add processes
+                    </div>
+                )}
+            </Modal.Header>
             <Modal.Body>
                 {/* Table for displaying row data */}
                 <Table>
@@ -79,15 +104,33 @@ export default function NewCustomRow(props) {
                         <tr>
                             <td>
                                 {/* Displaying Process ID */}
-                                <div className="row-cell">{row.id}</div>
+                                <div className="row-cell">{row.process_id}</div>
                             </td>
                             <td>
                                 {/* Input for Burst Time */}
-                                <input type="number" min="0" id="burst_time" className="row-cell" defaultValue={row.burst_time} onChange={(e) => handleChange(e)} />
+                                <input 
+                                    type="number" 
+                                    min="1" 
+                                    max="20"
+                                    id="burst_time" 
+                                    className="row-cell" 
+                                    defaultValue={row.burst_time} 
+                                    onChange={(e) => handleChange(e)}
+                                    disabled={props.simulationState === 'stopped'}
+                                />
                             </td>
                             <td>
                                 {/* Input for Memory Size */}
-                                <input type="number" min="0" id="memory_size" className="row-cell" defaultValue={row.memory_size} onChange={(e) => handleChange(e)} />
+                                <input 
+                                    type="number" 
+                                    min="1" 
+                                    max="24"
+                                    id="memory_size" 
+                                    className="row-cell" 
+                                    defaultValue={row.memory_size} 
+                                    onChange={(e) => handleChange(e)}
+                                    disabled={props.simulationState === 'stopped'}
+                                />
                             </td>
                             <td>
                                 {/* Displaying Arrival Time */}
@@ -97,11 +140,12 @@ export default function NewCustomRow(props) {
                                 {/* Input for Priority */}
                                 <input 
                                     type="number" 
-                                    min="0" 
+                                    min="1" 
+                                    max="10"
                                     id="priority" 
                                     className="row-cell" 
                                     defaultValue={row.priority}
-                                    disabled={props.policy !== "Priority" ? true : false} 
+                                    disabled={props.policy !== "Priority" || props.simulationState === 'stopped'} 
                                     onChange={(e) => handleChange(e)} 
                                 />
                             </td>
@@ -116,12 +160,32 @@ export default function NewCustomRow(props) {
                         </tr>
                     </tbody>
                 </Table>
+
+                {/* Input validation messages */}
+                <div style={{marginTop: '1rem', fontSize: '0.875rem', color: '#6c757d'}}>
+                    <div>• Burst Time: 1-20 units (CPU cycles needed)</div>
+                    <div>• Memory Size: 1-24 units (total available: 24)</div>
+                    <div>• Priority: 1-10 (1 = highest priority, only for Priority scheduling)</div>
+                </div>
             </Modal.Body>
             <Modal.Footer>
                 {/* Close button to hide the modal */}
-                <button id='Close' className="btn-primary" onClick={props.hide}>Close</button>
+                <button 
+                    id='Close' 
+                    className="btn-primary" 
+                    onClick={props.hide}
+                >
+                    Close
+                </button>
                 {/* Button to add a new row */}
-                <button id='Add New Row' className="btn-primary btn-add" onClick={() => addNewRow()}>Add Row</button>
+                <button 
+                    id='Add New Row' 
+                    className="btn-primary btn-add" 
+                    onClick={() => addNewRow()}
+                    disabled={props.simulationState === 'stopped'}
+                >
+                    Add Process
+                </button>
             </Modal.Footer>
         </Modal>
     )

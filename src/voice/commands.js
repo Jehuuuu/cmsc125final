@@ -44,6 +44,18 @@ const command = (name, id) => {
                     case 'delete process':
                         toast.success('Deleting process...');
                         break;
+                    case 'play simulation':
+                        toast.success('Starting simulation...');
+                        break;
+                    case 'pause simulation':
+                        toast('Pausing simulation...');
+                        break;
+                    case 'stop simulation':
+                        toast.error('Stopping simulation...');
+                        break;
+                    case 'resume simulation':
+                        toast.success('Resuming simulation...');
+                        break;
                     case 'yes':
                         toast.loading("Loading...");
                         break;
@@ -67,6 +79,50 @@ const command = (name, id) => {
     }
 }
 
+/**
+ * Custom command for simulation controls that need to find buttons by class
+ */
+const simulationCommand = (name, action) => {
+    return {
+        command: name,
+        callback: () => {
+            let element;
+            switch(action) {
+                case 'play':
+                    element = document.querySelector('.play-btn:not(:disabled)');
+                    break;
+                case 'pause':
+                    element = document.querySelector('.pause-btn:not(:disabled)');
+                    break;
+                case 'stop':
+                    element = document.querySelector('.stop-btn:not(:disabled)');
+                    break;
+            }
+            
+            if (element) {
+                element.click();
+                switch(name){
+                    case 'play simulation':
+                    case 'start simulation':
+                        toast.success('Starting simulation...');
+                        break;
+                    case 'pause simulation':
+                        toast('Pausing simulation...');
+                        break;
+                    case 'stop simulation':
+                        toast.error('Stopping simulation...');
+                        break;
+                    case 'resume simulation':
+                        toast.success('Resuming simulation...');
+                        break;
+                }
+            } else {
+                toast.error(`Cannot ${action} simulation right now`);
+            }
+        }
+    }
+}
+
 // Export an array of command objects
 export const commands = [
     // scheduling policies
@@ -74,6 +130,13 @@ export const commands = [
     command('simulate shortest job first', 'Shortest Job First'),
     command('simulate priority', 'Priority'),
     command('simulate round robin', 'Round Robin'),
+
+    // simulation controls
+    simulationCommand('play simulation', 'play'),
+    simulationCommand('start simulation', 'play'),
+    simulationCommand('pause simulation', 'pause'),
+    simulationCommand('stop simulation', 'stop'),
+    simulationCommand('resume simulation', 'play'),
 
     // process control
     command('add new process', 'New'),
