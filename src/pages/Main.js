@@ -226,65 +226,90 @@ export default function Main() {
     }, [data]);
 
     // Updated job queue function for paged memory
-    async function checkJobQueuePaged() {
-        // Prevent concurrent queue processing
-        if (processingQueue) {
-            console.log('Queue processing already in progress, skipping...');
+    // Updated checkJobQueuePaged function in Main.js
+async function checkJobQueuePaged() {
+    // Prevent concurrent queue processing
+    if (processingQueue) {
+        console.log('Queue processing already in progress, skipping...');
+        return;
+    }
+    
+    try {
+        setProcessingQueue(true);
+        
+        const queue = await getRows("queue");
+        setJobQueue(queue.length);
+        
+        if (queue.length === 0) {
             return;
         }
         
-        try {
-            setProcessingQueue(true);
+        console.log(`Processing job queue with ${queue.length} waiting processes`);
+        
+        // Sort queue by arrival time for fairness
+        const sortedQueue = queue.sort((a, b) => a.arrival_time - b.arrival_time);
+        
+        // Get current memory state to debug
+        const memoryPages = await getRows("memory");
+        const freePages = memoryPages.filter(page => page.status === "Free");
+        console.log(`Available free pages: ${freePages.length} out of ${memoryPages.length} total pages`);
+        
+        // Process jobs one at a time
+        for (const job of sortedQueue) {
+            console.log(`Attempting to allocate memory for process ${job.process_id} (${job.memory_size} units)`);
             
-            const queue = await getRows("queue");
-            setJobQueue(queue.length);
+            // Calculate pages needed
+            const PAGE_SIZE = 6;
+            const pagesNeeded = Math.ceil(job.memory_size / PAGE_SIZE);
+            console.log(`Process ${job.process_id} needs ${pagesNeeded} pages`);
             
-            if (queue.length === 0) {
-                return;
+            // Check if we have enough free pages
+            if (freePages.length < pagesNeeded) {
+                console.log(`Not enough free pages for process ${job.process_id}. Need ${pagesNeeded}, have ${freePages.length}`);
+                continue; // Try next process
             }
             
-            console.log(`Processing job queue with ${queue.length} waiting processes`);
+            // Try to allocate pages for the job
+            const allocationResult = await allocatePages(job.process_id, job.memory_size);
             
-            // Sort queue by arrival time for fairness
-            const sortedQueue = queue.sort((a, b) => a.arrival_time - b.arrival_time);
-            
-            // Process jobs one at a time
-            for (const job of sortedQueue) {
-                console.log(`Attempting to allocate memory for process ${job.process_id} (${job.memory_size} units)`);
+            if (allocationResult.success) {
+                console.log(`Successfully allocated memory for process ${job.process_id}`);
                 
-                // Try to allocate pages for the job
-                const allocationResult = await allocatePages(job.process_id, job.memory_size);
+                // Create PCB entry with proper initialization
+                const pcbEntry = {
+                    ...job,
+                    status: "Ready",
+                    waiting_time: 0,
+                    steps: 0,
+                    allocated_pages: pagesNeeded
+                };
                 
-                if (allocationResult.success) {
-                    console.log(`Successfully allocated memory for process ${job.process_id}`);
-                    
-                    // Create PCB entry with proper initialization
-                    const pcbEntry = {
-                        ...job,
-                        status: "Ready",
-                        waiting_time: 0,
-                        steps: 0,
-                        allocated_pages: Math.ceil(job.memory_size / 6)
-                    };
-                    
-                    // Move process from queue to PCB
-                    await addRow(pcbEntry, "pcb");
-                    await deleteRow(job.id, "queue");
-                    
-                    toast.success(`Process ${job.process_id} allocated ${Math.ceil(job.memory_size / 6)} page(s)`);
-                    
-                    // Process one job per cycle to avoid overwhelming the system
-                    break;
-                } else {
-                    console.log(`Process ${job.process_id} still waiting: ${allocationResult.message}`);
-                }
+                console.log(`Moving process ${job.process_id} from queue to PCB`);
+                
+                // Move process from queue to PCB
+                await addRow(pcbEntry, "pcb");
+                await deleteRow(job.id, "queue");
+                
+                toast.success(`Process ${job.process_id} allocated ${pagesNeeded} page(s)`);
+                
+                // Update free pages count for next iteration
+                const updatedMemory = await getRows("memory");
+                const updatedFreePages = updatedMemory.filter(page => page.status === "Free");
+                console.log(`Pages after allocation: ${updatedFreePages.length} free pages remaining`);
+                
+                // Process one job per cycle to avoid overwhelming the system
+                break;
+            } else {
+                console.log(`Process ${job.process_id} allocation failed: ${allocationResult.message}`);
             }
-        } catch (error) {
-            console.error('Error in checkJobQueuePaged:', error);
-        } finally {
-            setProcessingQueue(false);
         }
+    } catch (error) {
+        console.error('Error in checkJobQueuePaged:', error);
+        toast.error('Error processing job queue');
+    } finally {
+        setProcessingQueue(false);
     }
+}
     
 
     // Updated deleteRow function for paged memory

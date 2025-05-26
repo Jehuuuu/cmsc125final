@@ -7,6 +7,9 @@ import { addRow, getLastRowID, getProcessID } from "../data-funcs";
 // Importing useEffect and useState hooks from React
 import { useEffect, useState } from "react";
 
+// Import toast for notifications
+import { toast } from "react-hot-toast";
+
 // Defining a functional component named NewCustomRow
 export default function NewCustomRow(props) {
     // Defining state variable using useState hook
@@ -35,37 +38,64 @@ export default function NewCustomRow(props) {
         initialData();
     }, [props.show, true]);
 
-    // Asynchronous function to add a new row to the PCB
-    async function addNewRow() {
-        // Check if simulation is stopped
-        if (props.simulationState === 'stopped') {
-            alert('Cannot add process while simulation is stopped. Please start the simulation first.');
-            props.hide();
-            return;
-        }
-
-        // Validate input values
-        if (row.burst_time <= 0 || row.memory_size <= 0) {
-            alert('Burst time and memory size must be greater than 0');
-            return;
-        }
-
-        if (row.memory_size > 24) {
-            alert('Memory size cannot exceed 24 units (total available memory)');
-            return;
-        }
-
-        row.waiting_time = 0;   // Set initial waiting time
-        row.init_burst = row.burst_time;    // Set initial burst time
-        row.io_when = Math.floor(Math.random() * (row.burst_time - 1)) + 1;  // Set random io event
-        row.io_time = Math.floor(Math.random() * 10) + 1;   // Set random io time
-
-        // Add the row to the "queue"
-        await addRow(row, "queue");
-        // Hide the modal
+    // Updated addNewRow function in NewCustomRow.js
+async function addNewRow() {
+    // Check if simulation is stopped
+    if (props.simulationState === 'stopped') {
+        alert('Cannot add process while simulation is stopped. Please start the simulation first.');
         props.hide();
+        return;
     }
 
+    // Validate input values
+    if (!row.burst_time || row.burst_time <= 0) {
+        alert('Burst time must be greater than 0');
+        return;
+    }
+
+    if (!row.memory_size || row.memory_size <= 0) {
+        alert('Memory size must be greater than 0');
+        return;
+    }
+
+    if (row.memory_size > 24) {
+        alert('Memory size cannot exceed 24 units (total available memory)');
+        return;
+    }
+
+    // Convert string inputs to numbers
+    const processData = {
+        ...row,
+        burst_time: parseInt(row.burst_time),
+        memory_size: parseInt(row.memory_size),
+        priority: parseInt(row.priority) || 1,
+        waiting_time: 0,
+        init_burst: parseInt(row.burst_time),
+        io_when: Math.floor(Math.random() * (parseInt(row.burst_time) - 1)) + 1,
+        io_time: Math.floor(Math.random() * 10) + 1
+    };
+
+    console.log('Adding process to queue:', processData);
+
+    try {
+        // Add the row to the "queue"
+        const result = await addRow(processData, "queue");
+        
+        if (result === 201) { // HTTP 201 Created
+            console.log('Process successfully added to queue');
+            toast.success(`Process ${processData.process_id} added to job queue`);
+        } else {
+            console.error('Failed to add process to queue, status:', result);
+            toast.error('Failed to add process to queue');
+        }
+        
+        // Hide the modal
+        props.hide();
+    } catch (error) {
+        console.error('Error adding process:', error);
+        toast.error('Error adding process to queue');
+    }
+}
     // Function to handle input change
     function handleChange(e) {
         // Update the corresponding field in row state

@@ -157,13 +157,19 @@ export const deleteAllRows = async (table) => {
     }
 };
 
-// Enhanced initializePagedMemory function
+// Enhanced initializePagedMemory function with better error handling
 export const initializePagedMemory = async () => {
     try {
         console.log('Initializing paged memory system...');
         
         // Clear existing memory records safely
-        await deleteAllRows("memory");
+        const existingMemory = await getRows("memory");
+        console.log(`Found ${existingMemory.length} existing memory records to clear`);
+        
+        if (existingMemory.length > 0) {
+            await deleteAllRows("memory");
+            console.log('Existing memory records cleared');
+        }
         
         // Create fixed-size pages (4 pages of 6 units each for 24 total)
         const PAGE_SIZE = 6;
@@ -171,8 +177,7 @@ export const initializePagedMemory = async () => {
         
         console.log(`Creating ${TOTAL_PAGES} pages of ${PAGE_SIZE} units each`);
         
-        const pageCreationPromises = [];
-        
+        // Create pages sequentially to avoid race conditions
         for (let i = 0; i < TOTAL_PAGES; i++) {
             const page = {
                 page_number: i,
@@ -184,14 +189,15 @@ export const initializePagedMemory = async () => {
                 fragmentation: "None"
             };
             
-            pageCreationPromises.push(addRow(page, "memory"));
+            console.log(`Creating page ${i}`);
+            await addRow(page, "memory");
         }
         
-        // Wait for all pages to be created
-        await Promise.all(pageCreationPromises);
+        // Verify initialization
+        const newMemory = await getRows("memory");
+        console.log(`Memory initialization complete. Created ${newMemory.length} pages`);
         
-        console.log('Paged memory system initialized successfully');
-        return { success: true, message: "Paged memory initialized" };
+        return { success: true, message: "Paged memory initialized", pages: newMemory.length };
         
     } catch (error) {
         console.error('Error initializing paged memory:', error);
@@ -246,19 +252,35 @@ export const deallocatePages = async (processId) => {
     }
 };
 
-// Enhanced allocatePages function (unchanged but added for completeness)
+// Enhanced allocatePages function with better debugging
 export const allocatePages = async (processId, requiredSize) => {
     try {
-        console.log(`Attempting to allocate ${requiredSize} units for process ${processId}`);
+        console.log(`[ALLOCATION] Attempting to allocate ${requiredSize} units for process ${processId}`);
         
         const PAGE_SIZE = 6;
         const pagesNeeded = Math.ceil(requiredSize / PAGE_SIZE);
         
-        // Get free pages
+        // Get current memory state
         const allPages = await getRows("memory");
-        const freePages = allPages.filter(page => page.status === "Free");
+        console.log(`[ALLOCATION] Total memory pages: ${allPages.length}`);
         
-        console.log(`Need ${pagesNeeded} pages, have ${freePages.length} free pages`);
+        if (allPages.length === 0) {
+            console.error('[ALLOCATION] No memory pages found! Initializing memory...');
+            const initResult = await initializePagedMemory();
+            if (!initResult.success) {
+                return { success: false, message: 'Failed to initialize memory system' };
+            }
+            // Retry after initialization
+            return await allocatePages(processId, requiredSize);
+        }
+        
+        const freePages = allPages.filter(page => page.status === "Free");
+        console.log(`[ALLOCATION] Need ${pagesNeeded} pages, have ${freePages.length} free pages`);
+        
+        // Log current memory state for debugging
+        allPages.forEach(page => {
+            console.log(`[MEMORY] Page ${page.page_number}: ${page.status} - Process: ${page.process_id || 'None'}`);
+        });
         
         if (freePages.length < pagesNeeded) {
             return { 
@@ -271,7 +293,7 @@ export const allocatePages = async (processId, requiredSize) => {
         const allocatedPageNumbers = [];
         let remainingSize = requiredSize;
         
-        const allocationPromises = [];
+        console.log(`[ALLOCATION] Starting allocation for process ${processId}`);
         
         for (let i = 0; i < pagesNeeded && i < freePages.length; i++) {
             const page = freePages[i];
@@ -285,14 +307,19 @@ export const allocatePages = async (processId, requiredSize) => {
                 fragmentation: PAGE_SIZE - allocationSize > 0 ? "Internal" : "None"
             };
             
-            allocationPromises.push(editRow(updatedPage, "memory"));
+            console.log(`[ALLOCATION] Allocating page ${page.page_number} (${allocationSize}/${PAGE_SIZE} units) to process ${processId}`);
+            
+            const result = await editRow(updatedPage, "memory");
+            if (!result) {
+                console.error(`[ALLOCATION] Failed to update page ${page.page_number}`);
+                return { success: false, message: `Failed to allocate page ${page.page_number}` };
+            }
+            
             allocatedPageNumbers.push(page.page_number);
             remainingSize -= allocationSize;
-            
-            console.log(`Allocating page ${page.page_number} (${allocationSize}/${PAGE_SIZE} units) to process ${processId}`);
         }
         
-        await Promise.all(allocationPromises);
+        console.log(`[ALLOCATION] Successfully allocated ${pagesNeeded} pages for process ${processId}: [${allocatedPageNumbers.join(', ')}]`);
         
         return { 
             success: true, 
@@ -301,7 +328,7 @@ export const allocatePages = async (processId, requiredSize) => {
             message: `Allocated ${pagesNeeded} page(s) for process ${processId}` 
         };
     } catch (error) {
-        console.error('Error allocating pages:', error);
+        console.error('[ALLOCATION] Error allocating pages:', error);
         return { success: false, error: error.message };
     }
 };
