@@ -83,8 +83,8 @@
 /* Microphone Status Indicator */
 .mic-status-indicator {
     position: absolute;
-    bottom: 120px;
-    right: 320px;
+    bottom: 4px;
+    right: 101px;
     background: rgba(255, 255, 255, 0.95);
     border: 2px solid #e0e0e0;
     border-radius: 12px;

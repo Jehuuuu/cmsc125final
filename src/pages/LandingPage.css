@@ -1,0 +1,168 @@
+.landing-page {
+  min-height: 100vh;
+  background-color: var(--darling-background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  font-family: var(--font-family-base);
+}
+
+.landing-container {
+  max-width: 800px;
+  width: 100%;
+  text-align: center;
+}
+
+.landing-title {
+  color: var(--darling-primary);
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+  text-shadow: none;
+}
+
+.landing-subtitle {
+  color: var(--darling-text-secondary);
+  font-size: 1.2rem;
+  margin-bottom: var(--spacing-xl);
+  font-weight: 300;
+}
+
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.menu-button {
+  background-color: var(--darling-card-bg);
+  border: 2px solid var(--darling-border);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl) var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  cursor: pointer;
+  transition: var(--transition-normal);
+  box-shadow: var(--shadow-md);
+  text-align: left;
+  width: 100%;
+}
+
+.menu-button:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--darling-secondary);
+  background-color: var(--darling-background);
+}
+
+.menu-button:active {
+  transform: translateY(-1px);
+}
+
+.button-icon {
+  font-size: 3rem;
+  min-width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button-text {
+  flex: 1;
+}
+
+.button-text h3 {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--darling-primary);
+}
+
+.button-text p {
+  margin: 0;
+  color: var(--darling-text-secondary);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.ide-button:hover {
+  background-color: var(--darling-background);
+}
+
+.scheduler-button:hover {
+  background-color: var(--darling-background);
+}
+
+.simulator-button:hover {
+  background-color: var(--darling-background);
+}
+
+.ide-button:hover .button-text h3 {
+  color: var(--darling-secondary);
+}
+
+.scheduler-button:hover .button-text h3 {
+  color: var(--darling-secondary);
+}
+
+.simulator-button:hover .button-text h3 {
+  color: var(--darling-secondary);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .landing-title {
+    font-size: 2.5rem;
+  }
+  
+  .landing-subtitle {
+    font-size: 1rem;
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .menu-button {
+    padding: var(--spacing-lg) var(--spacing-md);
+    gap: var(--spacing-md);
+  }
+  
+  .button-icon {
+    font-size: 2.5rem;
+    min-width: 50px;
+  }
+  
+  .button-text h3 {
+    font-size: 1.3rem;
+  }
+  
+  .button-text p {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-title {
+    font-size: 2rem;
+  }
+  
+  .menu-button {
+    padding: var(--spacing-md) var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+  
+  .button-icon {
+    font-size: 2rem;
+    min-width: 40px;
+  }
+  
+  .button-text h3 {
+    font-size: 1.2rem;
+  }
+  
+  .button-text p {
+    font-size: 0.8rem;
+  }
+} 

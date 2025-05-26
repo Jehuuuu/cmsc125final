@@ -1,7 +1,7 @@
 .os-simulation {
-    background-color: #f8f9fa;
+    background-color: var(--darling-background);
     min-height: 100vh;
-    padding: 20px 0;
+    padding: var(--spacing-lg) 0;
 }
 
 .control-panel {
@@ -12,15 +12,15 @@
 }
 
 .control-panel h6 {
-    margin-bottom: 10px;
-    color: #495057;
+    margin-bottom: var(--spacing-sm);
+    color: var(--darling-primary);
     font-weight: 600;
 }
 
 .simulation-info h6 {
-    color: #495057;
+    color: var(--darling-primary);
     font-weight: 600;
-    margin-bottom: 15px;
+    margin-bottom: var(--spacing-md);
 }
 
 /* Queue Display Styles */
@@ -69,10 +69,10 @@
 }
 
 .frame-box {
-    transition: all 0.3s ease;
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    margin-bottom: 10px;
+    transition: var(--transition-normal);
+    border: 2px solid var(--darling-border);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-sm);
     position: relative;
     /* overflow: hidden; */
 }
@@ -83,10 +83,10 @@
 }
 
 .frame-box.empty {
-    background: linear-gradient(45deg, #f8f9fa 25%, transparent 25%), 
-                linear-gradient(-45deg, #f8f9fa 25%, transparent 25%), 
-                linear-gradient(45deg, transparent 75%, #f8f9fa 75%), 
-                linear-gradient(-45deg, transparent 75%, #f8f9fa 75%);
+    background: linear-gradient(45deg, var(--darling-background) 25%, transparent 25%), 
+                linear-gradient(-45deg, var(--darling-background) 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, var(--darling-background) 75%), 
+                linear-gradient(-45deg, transparent 75%, var(--darling-background) 75%);
     background-size: 20px 20px;
     background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
 }
@@ -177,31 +177,161 @@
 
 /* Algorithm Selector Styles */
 .algorithm-selector .form-select {
-    transition: all 0.2s ease;
+    transition: var(--transition-fast);
 }
 
 .algorithm-selector .form-select:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    border-color: var(--darling-primary);
+    box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25);
 }
 
 .algorithm-info {
-    background-color: #f8f9fa;
-    border-radius: 6px;
-    padding: 12px;
-    margin-top: 10px;
-    border-left: 4px solid #007bff;
+    background-color: var(--darling-card-bg);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-sm);
+    border-left: 4px solid var(--darling-primary);
+    border: 2px solid var(--darling-border);
 }
 
 /* Button Styles */
 .btn {
-    transition: all 0.2s ease;
+    transition: var(--transition-fast);
     font-weight: 500;
+    border-radius: var(--border-radius-sm);
+    border: 2px solid transparent;
 }
 
 .btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    box-shadow: var(--shadow-md);
+}
+
+/* Primary buttons - Dark brown */
+.btn-primary {
+    background-color: var(--darling-primary) !important;
+    border-color: var(--darling-primary) !important;
+    color: white !important;
+}
+
+.btn-primary:hover {
+    background-color: var(--darling-secondary) !important;
+    border-color: var(--darling-secondary) !important;
+    color: white !important;
+}
+
+.btn-primary:focus {
+    box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25);
+}
+
+/* Secondary buttons - Medium brown */
+.btn-secondary {
+    background-color: var(--darling-secondary) !important;
+    border-color: var(--darling-secondary) !important;
+    color: white !important;
+}
+
+.btn-secondary:hover {
+    background-color: var(--darling-primary) !important;
+    border-color: var(--darling-primary) !important;
+    color: white !important;
+}
+
+.btn-secondary:focus {
+    box-shadow: 0 0 0 0.2rem rgba(210, 105, 30, 0.25);
+}
+
+/* Success buttons - Accent brown */
+.btn-success {
+    background-color: var(--darling-accent) !important;
+    border-color: var(--darling-accent) !important;
+    color: var(--darling-text-primary) !important;
+}
+
+.btn-success:hover {
+    background-color: var(--darling-secondary) !important;
+    border-color: var(--darling-secondary) !important;
+    color: white !important;
+}
+
+.btn-success:focus {
+    box-shadow: 0 0 0 0.2rem rgba(255, 183, 77, 0.25);
+}
+
+/* Warning buttons - Light brown */
+.btn-warning {
+    background-color: var(--darling-accent) !important;
+    border-color: var(--darling-accent) !important;
+    color: var(--darling-text-primary) !important;
+}
+
+.btn-warning:hover {
+    background-color: var(--darling-secondary) !important;
+    border-color: var(--darling-secondary) !important;
+    color: white !important;
+}
+
+.btn-warning:focus {
+    box-shadow: 0 0 0 0.2rem rgba(255, 183, 77, 0.25);
+}
+
+/* Danger buttons - Keep readable but brown-ish */
+.btn-danger {
+    background-color: #A0522D !important;
+    border-color: #A0522D !important;
+    color: white !important;
+}
+
+.btn-danger:hover {
+    background-color: #8B4513 !important;
+    border-color: #8B4513 !important;
+    color: white !important;
+}
+
+.btn-danger:focus {
+    box-shadow: 0 0 0 0.2rem rgba(160, 82, 45, 0.25);
+}
+
+/* Info buttons */
+.btn-info {
+    background-color: var(--darling-secondary) !important;
+    border-color: var(--darling-secondary) !important;
+    color: white !important;
+}
+
+.btn-info:hover {
+    background-color: var(--darling-primary) !important;
+    border-color: var(--darling-primary) !important;
+    color: white !important;
+}
+
+.btn-info:focus {
+    box-shadow: 0 0 0 0.2rem rgba(210, 105, 30, 0.25);
+}
+
+/* Outline buttons */
+.btn-outline-primary {
+    background-color: transparent !important;
+    border-color: var(--darling-primary) !important;
+    color: var(--darling-primary) !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--darling-primary) !important;
+    border-color: var(--darling-primary) !important;
+    color: white !important;
+}
+
+.btn-outline-secondary {
+    background-color: transparent !important;
+    border-color: var(--darling-secondary) !important;
+    color: var(--darling-secondary) !important;
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--darling-secondary) !important;
+    border-color: var(--darling-secondary) !important;
+    color: white !important;
 }
 
 .btn-group .btn {
@@ -220,43 +350,45 @@
 
 /* Card Styles */
 .card {
-    border: none;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
-    border-radius: 8px;
+    border: 2px solid var(--darling-border);
+    background-color: var(--darling-card-bg);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-normal);
+    border-radius: var(--border-radius-sm);
 }
 
 .card:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
 }
 
 .card-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-color: var(--darling-primary);
     color: white;
     border-bottom: none;
     font-weight: 600;
-    border-radius: 8px 8px 0 0 !important;
+    border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0 !important;
 }
 
 .card-header.bg-primary {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+    background-color: var(--darling-primary) !important;
 }
 
 .card-header.bg-info {
-    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%) !important;
+    background-color: var(--darling-primary) !important;
 }
 
 .card-header.bg-success {
-    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%) !important;
+    background-color: var(--darling-primary) !important;
 }
 
 .card-header.bg-warning {
-    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
-    color: #212529 !important;
+    background-color: var(--darling-primary) !important;
+    color: white !important;
 }
 
 .card-header.bg-secondary {
-    background: linear-gradient(135deg, #6c757d 0%, #545b62 100%) !important;
+    background-color: var(--darling-primary) !important;
 }
 
 /* Badge Styles */
@@ -268,28 +400,30 @@
 
 /* Form Styles */
 .form-control, .form-select {
-    border-radius: 6px;
-    border: 1px solid #ced4da;
-    transition: all 0.2s ease;
+    border-radius: var(--border-radius-sm);
+    border: 2px solid var(--darling-border);
+    background-color: var(--darling-card-bg);
+    transition: var(--transition-fast);
 }
 
 .form-control:focus, .form-select:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    border-color: var(--darling-primary);
+    box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25);
+    background-color: var(--darling-background);
 }
 
 .form-range {
-    margin: 10px 0;
+    margin: var(--spacing-sm) 0;
 }
 
 .form-range::-webkit-slider-thumb {
-    background: #007bff;
+    background: var(--darling-primary);
     border-radius: 50%;
-    transition: all 0.2s ease;
+    transition: var(--transition-fast);
 }
 
 .form-range::-webkit-slider-thumb:hover {
-    background: #0056b3;
+    background: var(--darling-secondary);
     transform: scale(1.1);
 }
 
