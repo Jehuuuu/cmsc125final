@@ -10,36 +10,33 @@ import UndoIcon from '@mui/icons-material/Undo';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import DownloadIcon from '@mui/icons-material/Download';
-import { useCurrentEditor } from "@tiptap/react";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LOCAL_STORAGE_KEYS, getLocalStorageItem, setLocalStorageItem, generateUniqueTabName } from '../../utils/ideUtils';
+import { TabContext } from '../../utils/TabContext';
+import { EditorContext } from '../../utils/EditorContext';
 import Modal from './Modal/Modal';
 import './Modal/Modal.css';
 
 /**
  * This function is used for menubar component of the text editor.
- * It has parameters onTabAdd, onTabSave, enableSaveAs, and unsavedChanges.
- * onTabAdd is called when a new tab is to be added.
- * onTabSave is called when the current tab is to be saved.
- * enableSaveAs indicates whether the "Save As" option should be enabled.
- * unsavedChanges indicates whether there are unsaved changes in the current tab.
  */
-export default function Menubar({ onTabAdd, onTabSave,
-  enableSaveAs, unsavedChanges
-}) {
+export default function Menubar() {
   /**
-   * useCurrentEditor is a hook that provides access to the current editor instance.
    * useState is a hook that allows to have state variables in functional components.
-   * It is used to manage the zoom level, state of various modals, and the file name input
-   * useRef is a hook that is used to create a ref called fileInputRef that is initially set to null.
    */
-  const { editor } = useCurrentEditor();
+  const navigate = useNavigate();
   const [zoomLevel, setZoomLevel] = useState(100); // Initial zoom level
   const [isSaveAsModelOpen, setIsSaveAsModelOpen] = useState(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [isDownloadConfirm, setIsDownloadConfirm] = useState(false);
   const [fileNameInput, setFileNameInput] = useState('');
   const fileInputRef = useRef(null);
+  
+  // Use tab context
+  const { onTabAdd, onTabSave, enableSaveAs, unsavedChanges } = useContext(TabContext);
+  // Get editor from context
+  const { editor } = useContext(EditorContext);
 
   /** New/Open File Functionalities **/
   /* This is a function that calls the onTabAdd functions passed as a prop. */
@@ -127,16 +124,35 @@ export default function Menubar({ onTabAdd, onTabSave,
     
     /* Programmatically click the anchor element to start the download */
     anchor.click();
-    
   };
 
   /** Undo Redo Functionalities **/
   const handleUndo = () => {
-    editor.commands.undo();
+    if (editor && editor.can().undo()) {
+      editor.chain().focus().undo().run();
+      console.log('Undo executed');
+    } else {
+      console.log('Cannot undo - no undo history available');
+    }
   };
 
   const handleRedo = () => {
-    editor.commands.redo();
+    if (editor && editor.can().redo()) {
+      try {
+        // Try direct history access first
+        if (editor.storage.history && typeof editor.storage.history.redo === 'function') {
+          editor.storage.history.redo();
+        } else {
+          // Fall back to standard API
+          editor.chain().focus().redo().run();
+        }
+        console.log('Redo executed successfully');
+      } catch (error) {
+        console.error('Redo error:', error);
+      }
+    } else {
+      console.log('Cannot redo - no redo history available');
+    }
   };
 
   /** Cut Copy Paste Functionalities **/
@@ -177,11 +193,11 @@ export default function Menubar({ onTabAdd, onTabSave,
 
   /** Zoom Functionalities **/ 
   const handleZoomIn = () => {
-    setZoomLevel(prev => prev+=5)
+    setZoomLevel(prev => Math.min(prev + 10, 200)); // Increase by 10%, max 200%
   };
   
   const handleZoomOut = () => {
-    setZoomLevel(prev => prev-=5)
+    setZoomLevel(prev => Math.max(prev - 10, 50)); // Decrease by 10%, min 50%
   };
 
   /** Extra Commands **/
@@ -224,56 +240,171 @@ export default function Menubar({ onTabAdd, onTabSave,
   }
 
   /**
-   * This is a useEffect hook that sets the zoom level of the body element 
-   * to the zoomLevel state variable. It is used to update the zoom level of 
-   * the body element whenever the zoomLevel state changes.
+   * This useEffect updates the zoom level when it changes
    */
   useEffect(() => {
-    document.body.style.zoom = zoomLevel+'%';
-  }, [zoomLevel])
-  
+    // Apply zoom to the body element which contains our IDE
+    const ide = document.querySelector('.ide-container');
+    if (ide) {
+      // Set a CSS variable for the zoom scale
+      document.documentElement.style.setProperty('--zoom-scale', zoomLevel/100);
+      
+      // Apply the transform
+      ide.style.transform = `scale(${zoomLevel/100})`;
+      ide.style.transformOrigin = 'top left';
+      
+      // Add or remove zoomed class for additional styling
+      if (zoomLevel !== 100) {
+        ide.classList.add('zoomed');
+        
+        // Add zoomed-in or zoomed-out specific classes
+        if (zoomLevel > 100) {
+          ide.classList.add('zoomed-in');
+          ide.classList.remove('zoomed-out');
+        } else {
+          ide.classList.add('zoomed-out');
+          ide.classList.remove('zoomed-in');
+        }
+        
+        // Force a reflow to adjust the content properly
+        document.body.style.overflow = 'hidden';
+        
+        // Apply padding to body to account for the scaled container size
+        const heightDiff = (document.documentElement.clientHeight * (1 - zoomLevel/100));
+        const widthDiff = (document.documentElement.clientWidth * (1 - zoomLevel/100));
+        
+        // Set min-height on container to ensure content fills the screen
+        document.body.style.paddingBottom = `${heightDiff}px`;
+        document.body.style.paddingRight = `${widthDiff}px`;
+      } else {
+        ide.classList.remove('zoomed');
+        ide.classList.remove('zoomed-in');
+        ide.classList.remove('zoomed-out');
+        document.body.style.overflow = '';
+        document.body.style.paddingBottom = '';
+        document.body.style.paddingRight = '';
+      }
+      
+      // Show current zoom level in a small indicator that fades out
+      const existingIndicator = document.getElementById('zoom-indicator');
+      if (existingIndicator) {
+        document.body.removeChild(existingIndicator);
+      }
+      
+      const indicator = document.createElement('div');
+      indicator.id = 'zoom-indicator';
+      indicator.style.position = 'fixed';
+      indicator.style.bottom = '20px';
+      indicator.style.right = '20px';
+      indicator.style.background = 'var(--beige-1)';
+      indicator.style.color = 'var(--brown-3)';
+      indicator.style.padding = '8px 12px';
+      indicator.style.borderRadius = '4px';
+      indicator.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
+      indicator.style.fontSize = '14px';
+      indicator.style.fontFamily = '"Poppins", sans-serif';
+      indicator.style.zIndex = '9999';
+      indicator.style.opacity = '1';
+      indicator.style.transition = 'opacity 0.3s ease';
+      indicator.textContent = `Zoom: ${zoomLevel}%`;
+      
+      document.body.appendChild(indicator);
+      
+      // Fade out the indicator after 2 seconds
+      setTimeout(() => {
+        indicator.style.opacity = '0';
+        setTimeout(() => {
+          if (document.body.contains(indicator)) {
+            document.body.removeChild(indicator);
+          }
+        }, 300);
+      }, 2000);
+    }
+  }, [zoomLevel]);
+
   /* The component returns null if there's no editor instance. */
   if (!editor) {
     return null;
   }
+  
   return (
-    /**
-     * Each button has an `onClick` event handler that triggers the corresponding functions 
-     * for file operations, text editing, and zooming when clicked.
-     * It also has an ID for easier implementation of the voice commands.
-     * Some buttons also have a `disabled` prop which is set based certain conditions.
-     * Modals are also added which are only displayed based on the component's state.
-     * It also includes hidden buttons for "Select All", "Deselect", "Delete", "Delete All", 
-     * "Enter", and "Type", which are used for implementing voice commands.
-     */
-    <div className="container menubar-container" >
-      <button id="MENU-NEW" className="menubar-button" onClick = {handleNewFile}>
-        <NoteAddIcon />
-        <span className="menubar-button-label">New File</span>
-      </button>
-      <input
-        type="file"
-        ref={fileInputRef}
-        accept='.txt'
-        style={{ display: 'none' }}
-        onChange={openFileExplorer}
-      />
-      <button id="MENU-OPEN" className="menubar-button" onClick={handleOpenFile}>
-        <FileOpenIcon className="menubar-button-icon"/>
-        <span className="menubar-button-label">Open File</span>
-      </button>
-      <button id="MENU-SAVE" className="menubar-button" onClick={handleSave} disabled={!unsavedChanges}>
-        <SaveIcon className="menubar-button-icon"/>
-        <span className="menubar-button-label">Save File</span>
-      </button>
-      <button id="MENU-SAVE-AS" className="menubar-button" onClick={handleSaveAs} disabled={!enableSaveAs}>
-        <SaveAsIcon className="menubar-button-icon"/>
-        <span className="menubar-button-label">Save As File</span>
-      </button>
-      <button id="MENU-DOWNLOAD" className="menubar-button" onClick={handleDownload} disabled={!enableSaveAs}>
-        <DownloadIcon className="menubar-button-icon"/>
-        <span className="menubar-button-label">Download</span>
-      </button>
+    <>
+      <div className="menubar-container">
+        <div className="menubar-group menubar-group-primary">
+          <button id="MENU-NEW" className="menubar-button" onClick={handleNewFile}>
+            <NoteAddIcon className="menubar-button-icon" />
+            <span className="menubar-button-label">New File</span>
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept='.txt'
+            style={{ display: 'none' }}
+            onChange={openFileExplorer}
+          />
+          <button id="MENU-OPEN" className="menubar-button" onClick={handleOpenFile}>
+            <FileOpenIcon className="menubar-button-icon"/>
+            <span className="menubar-button-label">Open File</span>
+          </button>
+          <button id="MENU-SAVE" className="menubar-button" onClick={handleSave} disabled={!unsavedChanges}>
+            <SaveIcon className="menubar-button-icon"/>
+            <span className="menubar-button-label">Save File</span>
+          </button>
+          <button id="MENU-SAVE-AS" className="menubar-button" onClick={handleSaveAs} disabled={!enableSaveAs}>
+            <SaveAsIcon className="menubar-button-icon"/>
+            <span className="menubar-button-label">Save As</span>
+          </button>
+          <button id="MENU-DOWNLOAD" className="menubar-button" onClick={handleDownload} disabled={!enableSaveAs}>
+            <DownloadIcon className="menubar-button-icon"/>
+            <span className="menubar-button-label">Download</span>
+          </button>
+        </div>
+
+        <div className="vertical-division"/>
+        
+        <div className="menubar-group menubar-group-secondary">
+          <button id="MENU-UNDO" className="menubar-button" onClick={handleUndo} disabled={!editor.can().undo()}>
+            <UndoIcon className="menubar-button-icon"/>
+            <span className="menubar-button-label" >Undo</span>
+          </button>
+          <button id="MENU-REDO" className="menubar-button" onClick={handleRedo} disabled={!editor.can().redo()}>
+            <RedoIcon className="menubar-button-icon" />
+            <span className="menubar-button-label">Redo</span>
+          </button>
+          <button id="MENU-CUT" className="menubar-button" onClick={handleCut} disabled={!editor.getText()}>
+            <ContentCutIcon className="menubar-button-icon"/>
+            <span className="menubar-button-label">Cut</span>
+          </button>
+          <button id="MENU-COPY" className="menubar-button" onClick={handleCopy} disabled={!editor.getText()}>
+            <ContentCopyIcon className="menubar-button-icon"/>
+            <span className="menubar-button-label">Copy</span>
+          </button>
+          <button id="MENU-PASTE" className="menubar-button" onClick={handlePaste} disabled={!editor.isEditable}>
+            <ContentPasteIcon className="menubar-button-icon"/>
+            <span className="menubar-button-label">Paste</span>
+          </button>
+        </div>
+        
+        <div className="vertical-division"/>
+        
+        <div className="menubar-group menubar-group-zoom">
+          <button id="MENU-ZOOM-IN" className="menubar-button" onClick={handleZoomIn}>
+            <ZoomInIcon className="menubar-button-icon"/>
+            <span className="menubar-button-label">Zoom In</span>
+          </button>
+          <button id="MENU-ZOOM-OUT" className="menubar-button" onClick={handleZoomOut}>
+            <ZoomOutIcon className="menubar-button-icon"/>
+            <span className="menubar-button-label">Zoom Out</span>
+          </button>
+        </div>
+        
+        <button id="MENU-SELECT-ALL" onClick={handleSelectAll} hidden />
+        <button id="MENU-DESELECT" onClick={handleDeselect} hidden />
+        <button id="MENU-DELETE" onClick={handleDelete} hidden />
+        <button id="MENU-DELETE-ALL" onClick={handleDeleteAll} hidden />
+        <button id="MENU-ENTER" onClick={handleEnter} hidden />
+        <button id="MENU-TYPE" onClick={handleTyping} hidden />
+      </div>
 
       {/* Modal for Save As File */}
       <Modal 
@@ -318,43 +449,6 @@ export default function Menubar({ onTabAdd, onTabSave,
         onCancel={() => setIsDownloadConfirm(false)}
         onConfirm={handleConfirmDownload}
       />
-
-      <div className="vertical-division"/>
-      <button id="MENU-UNDO" className="menubar-button" onClick={handleUndo} disabled={!editor.can().undo()}>
-        <UndoIcon className="menubar-button-icon"/>
-        <span className="menubar-button-label" >Undo</span>
-      </button>
-      <button id="MENU-REDO" className="menubar-button" disabled={!editor.can().redo()} onClick={handleRedo}>
-        <RedoIcon className="menubar-button-icon" />
-        <span className="menubar-button-label">Redo</span>
-      </button>
-      <button id="MENU-CUT" className="menubar-button" onClick={handleCut} disabled={!editor.getText()}>
-        <ContentCutIcon className="menubar-button-icon"/>
-        <span className="menubar-button-label">Cut</span>
-      </button>
-      <button id="MENU-COPY" className="menubar-button" onClick={handleCopy} disabled={!editor.getText()}>
-        <ContentCopyIcon className="menubar-button-icon"/>
-        <span className="menubar-button-label">Copy</span>
-      </button>
-      <button id="MENU-PASTE" className="menubar-button" onClick={handlePaste} disabled={!editor.isEditable}>
-        <ContentPasteIcon className="menubar-button-icon"/>
-        <span className="menubar-button-label">Paste</span>
-      </button>
-      <div className="vertical-division"/>
-      <button id="MENU-ZOOM-IN" className="menubar-button" onClick={handleZoomIn}>
-        <ZoomInIcon className="menubar-button-icon"/>
-        <span className="menubar-button-label">Zoom In</span>
-      </button>
-      <button id="MENU-ZOOM-OUT" className="menubar-button" onClick={handleZoomOut}>
-        <ZoomOutIcon className="menubar-button-icon"/>
-        <span className="menubar-button-label">Zoom Out</span>
-      </button>
-      <button id="MENU-SELECT-ALL" onClick={handleSelectAll} hidden />
-      <button id="MENU-DESELECT" onClick={handleDeselect} hidden />
-      <button id="MENU-DELETE" onClick={handleDelete} hidden />
-      <button id="MENU-DELETE-ALL" onClick={handleDeleteAll} hidden />
-      <button id="MENU-ENTER" onClick={handleEnter} hidden />
-      <button id="MENU-TYPE" onClick={handleTyping} hidden />
-     </div>
+    </>
   )
 } 

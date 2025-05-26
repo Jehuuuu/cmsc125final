@@ -6,7 +6,7 @@
   min-height: 100vh;
   font-family: var(--font-family-base);
   color: var(--darling-text-primary);
-  padding: var(--spacing-lg);
+  padding: 0;
 }
 
 .header {

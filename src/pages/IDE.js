@@ -2,13 +2,17 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/ide.css';
 import Guide from '../components/ide/Guide';
-import Header from '../components/ide/Header';
-import TextEditor from '../components/ide/TextEditor';
+import Menubar from '../components/ide/Menubar';
+import Toolbar from '../components/ide/Toolbar';
+import Tabbar from '../components/ide/Tabbar';
 import VoiceCommands from '../components/ide/VoiceCommands';
 import WelcomeScreen from '../components/ide/WelcomeScreen';
 import HeaderImg from '../images/ide/header.png';
 import { LOCAL_STORAGE_KEYS, getLocalStorageItem, setLocalStorageItem } from '../utils/ideUtils';
+import { TabProvider } from '../utils/TabContext';
+import { EditorProvider } from '../utils/EditorContext';
 import { useNavigate } from 'react-router-dom';
+import Tooltip from '@mui/material/Tooltip';
 
 /**
  * 
@@ -17,6 +21,11 @@ import { useNavigate } from 'react-router-dom';
 function IDE() {
   const navigate = useNavigate();
   
+  // Function to navigate back to scheduling
+  const handleBackToScheduling = () => {
+    navigate('/schedule');
+  };
+
   // a react hook component to set the initial file content and file list
   useEffect(() => {
     // fetch the stored file content
@@ -54,54 +63,48 @@ function IDE() {
     return <WelcomeScreen />;
   }
 
-  const handleBackToScheduling = () => {
-    navigate('/schedule');
-  };
-
   return (
+    <EditorProvider>
+      <TabProvider>
     <div className="ide-container">
-      {/* Back button */}
-      <button 
-        onClick={handleBackToScheduling}
-        style={{
-          position: 'absolute',
-          top: '20px',
-          left: '20px',
-          zIndex: 1000,
-          backgroundColor: '#552C08',
-          color: 'white',
-          border: 'none',
-          padding: '10px 20px',
-          borderRadius: '5px',
-          cursor: 'pointer',
-          fontFamily: 'Poppins, sans-serif'
-        }}
-      >
-        ← Back to Scheduling
-      </button>
-
       {/* holds the left components of the screen */}
       <div className='ide-left-component'>
-        {/* logo */}
-        <img src={HeaderImg} alt="darling" className='ide-logo' />
+        {/* logo - made clickable to return to scheduling */}
+        <div 
+          className="logo-container" 
+          onClick={handleBackToScheduling}
+          role="button"
+          aria-label="Back to Scheduling"
+          tabIndex={0}
+        >
+          <Tooltip title="Back to Scheduling" arrow placement="right">
+            <img src={HeaderImg} alt="darling" className='ide-logo' />
+          </Tooltip>
+        </div>
 
         {/* guide */}
         <Guide />
       </div>
-        
 
         {/* holds the right components of the screen */}
         <div className='ide-right-component'>
-          {/* contains toolbar and menubar */}
-          <Header />
+            {/* Controls container with menubar and toolbar */}
+            <div className="controls-container">
+              <Menubar />
+              <Toolbar />
+            </div>
 
-          {/* text editor */}
-          <TextEditor />
+            {/* Content container with Tabbar (which now includes TextEditor) */}
+            <div className="content-container">
+              <Tabbar />
+            </div>
 
-          {/* voice commands */}
+            {/* voice commands remain outside the containers */}
           <VoiceCommands />
         </div>
     </div>
+      </TabProvider>
+    </EditorProvider>
   );
 }
 
