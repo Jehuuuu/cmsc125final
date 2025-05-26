@@ -1,16 +1,14 @@
-// Importing necessary hooks and modules from react, react-router-dom, and react-hot-toast
+// Updated Main.js with paged memory management
 import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import toast from 'react-hot-toast';
 
-// Importing necessary icons and styles
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import StopIcon from '@mui/icons-material/Stop';
 import './Main.css';
 
-// Importing necessary components
 import Policy from "../components/policy";
 import ConfirmSwitch from "../components/ConfirmSwitch";
 import PCBRows from "../components/PCB/PCBRows";
@@ -18,71 +16,71 @@ import Header from "../components/PCB/header";
 import TableHeader from "../components/PCB/tableHeader";
 import Simulation from "../components/Simulation/Simulation";
 
-// Importing necessary functions, scheduling policies, and data
-import { addRow, deleteAllRows, deleteRow, editRow, filterRows, getRows, getSum } from "../components/data-funcs";
+import { 
+    addRow, 
+    deleteAllRows, 
+    deleteRow, 
+    editRow, 
+    filterRows, 
+    getRows,
+    initializePagedMemory,
+    allocatePages,
+    deallocatePages,
+    getMemoryStats
+} from "../components/data-funcs";
 import { FCFS } from "../policies/FCFS";
 import { Priority } from "../policies/Priority";
 import { RoundRobin } from "../policies/RoundRobin";
 import { SJF } from "../policies/SJF";
 import jsonData from "../components/data.json";
-import './Main.css';
 
-// Main component
 export default function Main() {
-    // Using the useLocation hook to access the current location object
     const location = useLocation();
 
     /*<-------------- VARIABLES -------------->*/
-    const [openInfo, setOpenInfo] = useState(false); // open info modal
-    const [data, setData] = useState([]); // stores processes from json
-    const [time, setTime] = useState(0); // tracks running time 
-    const [currProcess, setCurrProcess] = useState({}); // stores current running process
-    const [changePolicy, setChangePolicy] = useState(false); // for change policy modal
-    const [toPolicy, setToPolicy] = useState("First Come, First Serve"); // for change policy modal
-    const [selectedPolicy, setSelectedPolicy] = useState( // selected schedule policy
+    const [openInfo, setOpenInfo] = useState(false);
+    const [data, setData] = useState([]);
+    const [time, setTime] = useState(0);
+    const [currProcess, setCurrProcess] = useState({});
+    const [changePolicy, setChangePolicy] = useState(false);
+    const [toPolicy, setToPolicy] = useState("First Come, First Serve");
+    const [selectedPolicy, setSelectedPolicy] = useState(
         location.state 
         ? location.state.policy 
         : 'First Come, First Serve');   
 
-    const [avgTime, setAvgTime] = useState({ // stores calculated avg time
+    const [avgTime, setAvgTime] = useState({
         total_time: 0,
         total_rows: 0,
         avg_time: 0
     });
     
-    // State for job queue
     const [jobQueue, setJobQueue] = useState(0)
-
-    // Simulation control states
-    const [simulationState, setSimulationState] = useState('stopped'); // 'playing', 'paused', 'stopped'
+    const [simulationState, setSimulationState] = useState('stopped');
     const [isSimulationRunning, setIsSimulationRunning] = useState(false);
     const intervalRef = useRef(null);
 
-    const policies = [ // list of scheduling policies
+    const policies = [
         'First Come, First Serve',
         'Shortest Job First',
         'Priority',
         'Round Robin',
-  ];
+    ];
 
     /*<-------------- SIMULATION CONTROL FUNCTIONS -------------->*/
     
-    // Start or resume simulation
     const playSimulation = () => {
         if (simulationState === 'stopped') {
-            // Starting fresh simulation
             setSimulationState('playing');
             setIsSimulationRunning(true);
             toast.success('Simulation started');
         } else if (simulationState === 'paused') {
-            // Resuming paused simulation
             setSimulationState('playing');
             setIsSimulationRunning(true);
             toast.success('Simulation resumed');
         }
     };
 
-    // Pause simulation
     const pauseSimulation = () => {
         if (simulationState === 'playing') {
             setSimulationState('paused');
@@ -91,7 +89,6 @@ export default function Main() {
         }
     };
 
-    // Stop simulation and reset
     const stopSimulation = async () => {
         setSimulationState('stopped');
         setIsSimulationRunning(false);
@@ -100,20 +97,9 @@ export default function Main() {
         // Clear all processes and reset memory
         await deleteAllRows("pcb");
         await deleteAllRows("queue");
-        await deleteAllRows("memory");
         
-        // Reset memory to initial state
-        var segment = {
-            block_size: 24,
-            row_id:"",
-            location: 0,
-            process_id: "",
-            job_size: "",
-            status: "Free",
-            fragmentation: "None",
-            splittable: true
-        }
-        await addRow(segment, "memory");
+        // Initialize paged memory system
+        await initializePagedMemory();
         
         // Reset statistics
         setAvgTime({
@@ -126,45 +112,37 @@ export default function Main() {
         toast.error('Simulation stopped and reset');
     };
 
-    /*<-------------- EXISTING FUNCTIONS -------------->*/
-    // fetch data to display
+    /*<-------------- EXISTING FUNCTIONS WITH PAGED MEMORY -------------->*/
+    
     useEffect(() => {
-      async function fetchData() {
-        setData(await getRows("pcb"));
-      }
-      fetchData()
+        async function fetchData() {
+            setData(await getRows("pcb"));
+        }
+        fetchData()
     }, []);
 
-    // processes to do when new policy is selected
     async function clickPolicy(e) {
         const policy = e.target.value;
         setToPolicy(policy);
-
-        /* open modal to change policy here */
         setChangePolicy(true);
     }
 
-    // calculate average waiting time
     useEffect(() => {
-        var obj = avgTime; // holder for updated avg time
-        const running = data.filter(item => item.status === "Running"); // get current running process
+        var obj = avgTime;
+        const running = data.filter(item => item.status === "Running");
 
         if(running.length > 0) {
-            // if not same with stored currProcess
             if(running[0].id !== currProcess.id) { 
-
-                obj.total_time += running[0].waiting_time; // add waiting time to total time
-                obj.total_rows += 1; // add new row to total rows
-                obj.avg_time = parseFloat(obj.total_time / obj.total_rows).toFixed(2); // recalculate avg time
-
-                setCurrProcess(running[0]); // set it as the new currProcess
+                obj.total_time += running[0].waiting_time;
+                obj.total_rows += 1;
+                obj.avg_time = parseFloat(obj.total_time / obj.total_rows).toFixed(2);
+                setCurrProcess(running[0]);
             }
         }
 
-        setAvgTime(obj); // set the updated avg time
+        setAvgTime(obj);
     }, [data]);
 
-    // increment waiting time
     async function changeWaitTime() {
         var allRows = await filterRows("status", "Ready", "pcb");
 
@@ -175,7 +153,6 @@ export default function Main() {
         })
     }
 
-    // decrement IO time
     async function changeIOTime() {
         const waiting = await filterRows("status", "Waiting", "pcb");
 
@@ -191,10 +168,13 @@ export default function Main() {
         })
     }
 
-    // Modified time interval component - now controlled by simulation state
     useEffect(() => {
         if (isSimulationRunning) {
             intervalRef.current = setInterval(async () => {
+                // Check job queue first to move processes from queue to PCB
+                await checkJobQueuePaged();
+                
+                // Then run the scheduling policy
                 if(selectedPolicy === "First Come, First Serve") {
                     FCFS();
                 } else if(selectedPolicy === "Shortest Job First") {
@@ -205,24 +185,21 @@ export default function Main() {
                     RoundRobin()
                 }
             
-                // increment waiting time per interval
                 changeWaitTime();
-
-                // decrement io time per interval
                 changeIOTime();
-
-              setTime(time => time + 1)
+                setTime(time => time + 1);
+                
+                // Update data to trigger re-render
+                setData(await getRows("pcb"));
               
             }, 3000);
         } else {
-            // Clear interval when simulation is not running
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;
             }
         }
 
-        // Cleanup function
         return () => {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
@@ -230,7 +207,6 @@ export default function Main() {
         };
     }, [isSimulationRunning, selectedPolicy]); 
 
-    // io calculations
     useEffect(() => {
         async function updateIOEvent() {
             const running = await filterRows("status", "Running", "pcb");
@@ -248,137 +224,83 @@ export default function Main() {
         updateIOEvent();
     }, [data]);
 
-    function isEmptyObject(obj) {
-        return Object.keys(obj).length === 0 && obj.constructor === Object;
-    }
-
-    // Job Queue - Memory Calculations
-    async function checkJobQueue() {
-        // get jobQueues
-        var queue = await getRows("queue")
-        // Set JobQueue to change badge status
-        setJobQueue(queue.length)
-        
-        var i = 0;
-        // for each queue, search memory space to
-        while (i < queue.length) {
-          const memory = await filterRows("status", "Free", "memory")
-          var job = queue[i]
-          var smallestFragmentation = {}
-            for (var idx = 0; idx < memory.length; idx++){
-              var currMemory = memory[idx]
-              if (isEmptyObject(smallestFragmentation) && currMemory.splittable && currMemory.block_size >= job.memory_size) {
-                // Split the segment
-                if (parseInt(currMemory.block_size) - parseInt(job.memory_size) > 0) {
-                  var remainingSegment = {
-                    process_id: "",
-                    job_size: "",
-                    row_id: "",
-                    status: "Free",
-                    Fragmentation: "None",
-                    block_size: parseInt(currMemory.block_size) - parseInt(job.memory_size),
-                    splittable: true
-                  }
-                  // add to memory and pcb, delete it from queue
-                    await addRow(remainingSegment, "memory")
-                }
+    // Updated job queue function for paged memory
+    async function checkJobQueuePaged() {
+        try {
+            const queue = await getRows("queue");
+            setJobQueue(queue.length);
+            
+            // Process jobs one at a time to avoid conflicts
+            for (let i = 0; i < queue.length; i++) {
+                const job = queue[i];
                 
-                // Create another segment
-                var segment = {
-                  id: currMemory.id,
-                  block_size: parseInt(job.memory_size),              
-                  process_id: job.process_id,
-                  row_id: job.id,
-                  job_size: parseInt(job.memory_size),
-                  status: "Busy",
-                  fragmentation: 0,
-                  splittable: false
-                }
-                await addRow(job, "pcb")
-                await deleteRow(job.id, "queue")
-                await editRow(segment, "memory")
-                queue = await getRows("queue");
-                i--
-
-                break;
-              } else if(currMemory.block_size >= job.memory_size) {
-                var fragmentation = memory[idx].block_size - job.memory_size
-                if(isEmptyObject(smallestFragmentation) || fragmentation < smallestFragmentation.fragmentation) {
-                  smallestFragmentation = memory[idx]
-                  smallestFragmentation.fragmentation = fragmentation
-                  smallestFragmentation.process_id = job.process_id
-                  smallestFragmentation.row_id = job.id
-                  smallestFragmentation.job_size = job.memory_size
-                  smallestFragmentation.status = "Busy"
+                // Try to allocate pages for the job
+                const allocationResult = await allocatePages(job.process_id, job.memory_size);
+                
+                if (allocationResult.success) {
+                    // Create PCB entry with proper initialization
+                    const pcbEntry = {
+                        ...job,
+                        status: "Ready",
+                        waiting_time: 0,
+                        steps: 0,
+                        allocated_pages: Math.ceil(job.memory_size / 6)
+                    };
+                    
+                    // Move process from queue to PCB
+                    await addRow(pcbEntry, "pcb");
+                    await deleteRow(job.id, "queue");
+                    
+                    toast.success(`Process ${job.process_id} allocated ${Math.ceil(job.memory_size / 6)} page(s)`);
+                    
+                    // Break after successful allocation to process one job per cycle
+                    break;
                 } else {
-                  continue
+                    // Log why allocation failed for debugging
+                    console.log(`Process ${job.process_id} waiting: ${allocationResult.message}`);
                 }
-              }
             }
-            if (!isEmptyObject(smallestFragmentation)) {
-              await editRow(smallestFragmentation, "memory")
-              await addRow(job, "pcb")
-              await deleteRow(job.id, "queue")
-              queue = await getRows("queue");
-              i--
-            }
-
-            i++
-        }
-        // Check if there is a need for compaction
-        const remainingQueue = await getRows("queue")
-        const currentMem = await filterRows("status", "Free", "memory")
-
-        if (remainingQueue.length > 0 && currentMem.length > 1) {
-          // perform compaction
-          await startCompaction()
-        }
-    } 
-
-    async function startCompaction() {
-         // get all free
-        const memory = await filterRows("status", "Free", "memory")
-        // combine - add block size
-        const combinedSum = getSum(memory)
-        // create new segment with the sum of block size
-        var combinedSegment = {
-          process_id: "",
-          job_size: "",
-          row_id:"",
-          status: "Free",
-          Fragmentation: null,
-          block_size: combinedSum,
-          splittable: true
-        }
-        await addRow(combinedSegment, "memory")
-        // delete all free
-        for (var idx = 0; idx < memory.length; idx++){
-          await deleteRow(memory[idx].id, "memory")
+        } catch (error) {
+            console.error('Error in checkJobQueuePaged:', error);
         }
     }
+
+    // Updated deleteRow function for paged memory
+    const deleteRowPaged = async (process_id, table) => {
+        try {
+            const response = await deleteRow(process_id, table);
+            
+            if (table === "pcb") {
+                // Deallocate pages for the process
+                const result = await deallocatePages(process_id.toString());
+                if (result.success) {
+                    console.log(`Pages deallocated for process ${process_id}`);
+                    toast.success(`Memory freed for process ${process_id}`);
+                    
+                    // After freeing memory, check if any queued processes can now run
+                    setTimeout(async () => {
+                        await checkJobQueuePaged();
+                    }, 100);
+                }
+            }
+            
+            return response;
+        } catch (error) {
+            console.error('Error in deleteRowPaged:', error);
+        }
+    };
 
     useEffect(() => {
-      (async () => await checkJobQueue())()
-    },[jsonData])
+        (async () => await checkJobQueuePaged())()
+    }, [jsonData])
 
-    // Initialize simulation on component mount
+    // Initialize paged memory on component mount
     useEffect(() => {
         const initializeSimulation = async () => {
             if (simulationState === 'stopped') {
                 await deleteAllRows("pcb");
                 await deleteAllRows("queue");
-                await deleteAllRows("memory");
-                var segment = {
-                    block_size: 24,
-                    row_id:"",
-                    location: 0,
-                    process_id: "",
-                    job_size: "",
-                    status: "Free",
-                    fragmentation: "None",
-                    splittable: true
-                }
-                await addRow(segment, "memory")
+                await initializePagedMemory();
             }
         };
         
@@ -449,7 +371,6 @@ export default function Main() {
                     </div>
                 </div>
 
-                {/* info */}
                 <InfoOutlined className="info" onClick={() => setOpenInfo(true)} />
                 <Policy policy={selectedPolicy} open={openInfo} close={() => setOpenInfo(false)} />
             </div>
@@ -461,7 +382,6 @@ export default function Main() {
 
             {/* PCB */}
             <div className="pcb-cont cont-template">
-                {/* PCB header */}
                 <Header 
                     time={time} 
                     policy={selectedPolicy} 
@@ -469,14 +389,10 @@ export default function Main() {
                     simulationState={simulationState}
                 />
 
-                {/* PCB table */}
                 <TableHeader data={data} policy={selectedPolicy} />
-
-                {/* PCB rows */}
                 <PCBRows policy={selectedPolicy} />
             </div>
 
-            {/* change Policy Modal */}
             <ConfirmSwitch open={changePolicy} close={() => setChangePolicy(false)} to_policy={toPolicy} />
         </div>
     );
