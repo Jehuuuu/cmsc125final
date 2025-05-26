@@ -53,6 +53,7 @@ const AlgorithmSelector = ({
                                 value={cpuAlgorithm}
                                 onChange={(e) => onCpuAlgorithmChange(e.target.value)}
                                 disabled={disabled}
+                                data-algorithm-type="cpu"
                             >
                                 {cpuAlgorithms.map(algo => (
                                     <option key={algo.value} value={algo.value}>
@@ -94,6 +95,7 @@ const AlgorithmSelector = ({
                                 value={memoryAlgorithm}
                                 onChange={(e) => onMemoryAlgorithmChange(e.target.value)}
                                 disabled={disabled}
+                                data-algorithm-type="memory"
                             >
                                 {memoryAlgorithms.map(algo => (
                                     <option key={algo.value} value={algo.value}>
@@ -132,6 +134,7 @@ const AlgorithmSelector = ({
                         value={selectedScenario}
                         onChange={(e) => onScenarioChange(e.target.value)}
                         disabled={disabled}
+                        data-algorithm-type="scenario"
                     >
                         {testScenarios.map(scenario => (
                             <option key={scenario.value} value={scenario.value}>
