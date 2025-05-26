@@ -28,7 +28,6 @@
 
 .policy-cont .policies {
     display: flex;
-    justify-content: center;
     gap: 30px;
     width: 80%;
 }
@@ -36,6 +35,162 @@
 .policy-cont .selected-policy {
     background-color: var(--color-blue);
     color: white;
+}
+
+/* Simulation Controls Styles */
+.simulation-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background-color: #f8f9fa;
+    padding: 15px 20px;
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 80%;
+    justify-content: center;
+}
+
+.control-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 90px;
+    justify-content: center;
+}
+
+.control-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.play-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+.play-btn:hover:not(:disabled) {
+    background-color: #218838;
+    transform: translateY(-1px);
+}
+
+.play-btn.active {
+    background-color: #20c997;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.4);
+}
+
+.pause-btn {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.pause-btn:hover:not(:disabled) {
+    background-color: #e0a800;
+    transform: translateY(-1px);
+}
+
+.pause-btn.active {
+    background-color: #fd7e14;
+    color: white;
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.4);
+}
+
+.stop-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.stop-btn:hover:not(:disabled) {
+    background-color: #c82333;
+    transform: translateY(-1px);
+}
+
+.simulation-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 20px;
+    padding-left: 20px;
+    border-left: 2px solid #dee2e6;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    color: #495057;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.playing {
+    background-color: #28a745;
+}
+
+.status-indicator.paused {
+    background-color: #ffc107;
+    animation: none;
+}
+
+.status-indicator.stopped {
+    background-color: #dc3545;
+    animation: none;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+    }
+}
+
+.status-text {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.time-display {
+    font-size: 14px;
+    color: var(--color-blue);
+    font-weight: 600;
+}
+
+/* Responsive design for simulation controls */
+@media (max-width: 768px) {
+    .simulation-controls {
+        flex-direction: column;
+        gap: 10px;
+        width: 95%;
+    }
+    
+    .control-btn {
+        width: 100%;
+        min-width: unset;
+    }
+    
+    .simulation-status {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+        border-top: 2px solid #dee2e6;
+        padding-top: 10px;
+        justify-content: center;
+    }
 }
 
 .info {
@@ -365,38 +520,4 @@
 
 .confirm-switch button#No:hover {
     background-color: whitesmoke;
-}
-
-/* Modal centering */
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1050;
-}
-
-.modal-dialog {
-    position: relative;
-    width: auto;
-    margin: 1.75rem auto;
-    pointer-events: none;
-    max-width: 500px;
-}
-
-.modal-content {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    pointer-events: auto;
-    background-color: #fff;
-    background-clip: padding-box;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    border-radius: 0.3rem;
-    outline: 0;
 }

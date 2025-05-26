@@ -28,6 +28,12 @@ export default function Header(props) {
 
     // Asynchronous function to add a new row to the PCB
     async function addNewRow(type) {
+        // Check if simulation is stopped before allowing new processes
+        if (props.simulationState === 'stopped') {
+            alert('Please start the simulation before adding processes');
+            return;
+        }
+
         // Get the last row ID and increment by 1 to get the new row ID
         const id = Number(await getLastRowID("pcb")) + 1;
 
@@ -81,22 +87,53 @@ export default function Header(props) {
 
                 {/* Dropdown menu to add a new process */}
                 <Dropdown className="dropdown">
-                    <Dropdown.Toggle className="new-process" id="New">
+                    <Dropdown.Toggle 
+                        className="new-process" 
+                        id="New"
+                        disabled={props.simulationState === 'stopped'}
+                    >
                         Add New Process
                     </Dropdown.Toggle>
 
                     <Dropdown.Menu>
                         {/* Dropdown item to generate a random process */}
-                        <Dropdown.Item id='Random' onClick={() => addNewRow("random")}>Generate Random Process</Dropdown.Item>
+                        <Dropdown.Item 
+                            id='Random' 
+                            onClick={() => addNewRow("random")}
+                            disabled={props.simulationState === 'stopped'}
+                        >
+                            Generate Random Process
+                        </Dropdown.Item>
 
                         {/* Dropdown item to add a custom process */}
-                        <Dropdown.Item id='Custom' onClick={() => addNewRow("custom")}>Add Custom Process</Dropdown.Item>
+                        <Dropdown.Item 
+                            id='Custom' 
+                            onClick={() => addNewRow("custom")}
+                            disabled={props.simulationState === 'stopped'}
+                        >
+                            Add Custom Process
+                        </Dropdown.Item>
                     </Dropdown.Menu>
                 </Dropdown>
+                
+                {/* Simulation state indicator */}
+                {props.simulationState === 'stopped' && (
+                    <div className="simulation-hint">
+                        <small style={{color: '#6c757d', marginLeft: '10px'}}>
+                            Start simulation to add processes
+                        </small>
+                    </div>
+                )}
             </div>
 
             {/* Modal for adding a custom process */}
-            <NewCustomRow show={open} hide={() => setOpen(false)} time={props.time} policy={props.policy} />
+            <NewCustomRow 
+                show={open} 
+                hide={() => setOpen(false)} 
+                time={props.time} 
+                policy={props.policy}
+                simulationState={props.simulationState}
+            />
 
             {/* Modal for displaying memory */}
             <Memory open={openMemory} close={() => setOpenMemory(false)}/>
