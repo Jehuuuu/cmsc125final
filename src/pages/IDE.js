@@ -23,7 +23,7 @@ function IDE() {
   
   // Function to navigate back to scheduling
   const handleBackToScheduling = () => {
-    navigate('/schedule');
+    navigate('/');
   };
 
   // a react hook component to set the initial file content and file list
