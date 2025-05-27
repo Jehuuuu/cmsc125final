@@ -11,6 +11,8 @@ import Welcome from "./Welcome";
 import './Schedule.css';
 // Importing a component named VoiceCommands
 import VoiceCommands from "../voice/VoiceCommands";
+// Importing CPU Voice Guide component
+import CPUVoiceGuide from "../components/CPUVoiceGuide";
 
 // Policy data with icons and descriptions
 const policies = [
@@ -110,6 +112,9 @@ export default function Schedule() {
                 </div>
 
                 <VoiceCommands />
+
+                {/* CPU Scheduling Voice Guide */}
+                <CPUVoiceGuide />
             </main>
 
             {/* Rendering an image with the BG as the source and "Schedule" as the alt text */}

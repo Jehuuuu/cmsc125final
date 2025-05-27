@@ -17,6 +17,7 @@ import PCBRows from "../components/PCB/PCBRows";
 import Header from "../components/PCB/header";
 import TableHeader from "../components/PCB/tableHeader";
 import Simulation from "../components/Simulation/Simulation";
+import CPUVoiceGuide from "../components/CPUVoiceGuide";
 
 // Importing necessary functions, scheduling policies, and data
 import { addRow, deleteAllRows, deleteRow, editRow, filterRows, getRows, getSum } from "../components/data-funcs";
@@ -478,6 +479,11 @@ export default function Main() {
 
             {/* change Policy Modal */}
             <ConfirmSwitch open={changePolicy} close={() => setChangePolicy(false)} to_policy={toPolicy} />
+
+            {/* CPU Scheduling Voice Guide */}
+            <div className="voice-guide-cont">
+                <CPUVoiceGuide />
+            </div>
         </div>
     );
 }
