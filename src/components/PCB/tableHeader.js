@@ -1,27 +1,121 @@
-// This is a functional component that renders the table header for a process control block (PCB)
+// Import necessary components
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
+import SortIcon from '@mui/icons-material/Sort';
+
+// This is a functional component that renders the enhanced table header for a process control block (PCB)
 export default function TableHeader(props) {
-    // The component returns a div with a dynamic class name based on the length of the data prop
+    // The component returns a div with enhanced styling and functionality
     return (
-        <div className={"pcb-table-header " + (props.data.length > 2 ? "table-scroll" : "table-no-scroll")}>
-            {/* Empty div for CPU Scheduler */}
-            <div className="pcb-table-cell"></div>
-
-            {/* Divs for PCB headers */}
-            <div className="pcb-table-cell">Process ID</div> {/* Header for Process ID */}
-            <div className="pcb-table-cell">Burst Time</div> {/* Header for Burst Time */}
-            <div className="pcb-table-cell">Memory Size</div> {/* Header for Memory Size */}
-            <div className="pcb-table-cell">Arrival Time</div> {/* Header for Arrival Time */}
-            <div className={"pcb-table-cell " + 
-                (props.policy !== "Priority" ? "color-gray" : "")}>
-                Priority {/* Header for Priority, with conditional styling based on the policy prop */}
+        <div className={"pcb-table-header enhanced-header " + (props.data.length > 2 ? "table-scroll" : "table-no-scroll")}>
+            {/* Empty div for CPU Scheduler indicator */}
+            <div className="pcb-table-cell header-cell">
+                <span className="header-icon">🔄</span>
             </div>
-            <div className="pcb-table-cell">Status</div> {/* Header for Status */}
-            <div className="pcb-table-cell">Waiting Time</div> {/* Header for Waiting Time */}
-            <div className="pcb-table-cell">IO Event</div> {/* Header for IO Event */}
-            <div className="pcb-table-cell">IO Time</div> {/* Header for IO Time */}
 
-            {/* Empty div for delete button */}
-            <div className="pcb-table-cell"></div>
+            {/* Enhanced header cells with tooltips and sorting */}
+            <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Unique identifier for each process</Tooltip>}
+            >
+                <div className="pcb-table-cell header-cell sortable">
+                    Process ID
+                    <SortIcon className="sort-icon" />
+                </div>
+            </OverlayTrigger>
+
+            <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Remaining CPU time needed (decreases during execution)</Tooltip>}
+            >
+                <div className="pcb-table-cell header-cell sortable">
+                    Burst Time
+                    <SortIcon className="sort-icon" />
+                </div>
+            </OverlayTrigger>
+
+            <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Memory space required by the process</Tooltip>}
+            >
+                <div className="pcb-table-cell header-cell">
+                    Memory Size
+                </div>
+            </OverlayTrigger>
+
+            <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Time when process entered the system</Tooltip>}
+            >
+                <div className="pcb-table-cell header-cell sortable">
+                    Arrival Time
+                    <SortIcon className="sort-icon" />
+                </div>
+            </OverlayTrigger>
+
+            <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Process priority (1=highest, 10=lowest) - Only used in Priority scheduling</Tooltip>}
+            >
+                <div className={"pcb-table-cell header-cell " + 
+                    (props.policy !== "Priority" ? "color-gray disabled-header" : "sortable")}>
+                    Priority
+                    {props.policy === "Priority" && <SortIcon className="sort-icon" />}
+                    {props.policy !== "Priority" && <span className="disabled-indicator">⚪</span>}
+                </div>
+            </OverlayTrigger>
+
+            <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Current state: Running, Ready, Waiting, or Terminated</Tooltip>}
+            >
+                <div className="pcb-table-cell header-cell">
+                    Status
+                    <div className="status-legend">
+                        <span className="legend-item running">▶️</span>
+                        <span className="legend-item ready">⏳</span>
+                        <span className="legend-item waiting">⏸️</span>
+                        <span className="legend-item terminated">✅</span>
+                    </div>
+                </div>
+            </OverlayTrigger>
+
+            <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Time spent waiting in ready queue</Tooltip>}
+            >
+                <div className="pcb-table-cell header-cell sortable">
+                    Waiting Time
+                    <SortIcon className="sort-icon" />
+                </div>
+            </OverlayTrigger>
+
+            <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>When I/O event occurs during execution</Tooltip>}
+            >
+                <div className="pcb-table-cell header-cell">
+                    I/O Event
+                </div>
+            </OverlayTrigger>
+
+            <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Remaining I/O operation time</Tooltip>}
+            >
+                <div className="pcb-table-cell header-cell">
+                    I/O Time
+                </div>
+            </OverlayTrigger>
+
+            {/* Actions column */}
+            <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>Process actions</Tooltip>}
+            >
+                <div className="pcb-table-cell header-cell">
+                    Actions
+                </div>
+            </OverlayTrigger>
         </div>     
     )
 }

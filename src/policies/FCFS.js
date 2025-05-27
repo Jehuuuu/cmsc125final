@@ -31,11 +31,9 @@ const changeStatus = async () => {
         // change first row to running
         rows[0].status = "Running";
 
-        // start decrementing burst time
-        rows[0].burst_time -= 1;
-         
-        // increase steps
-        rows[0].steps += 1;
+        // Don't decrement burst time here - it should only be decremented during execution
+        // Reset steps when starting a new process
+        rows[0].steps = 0;
     
         // push edit
         pushChanges(rows[0]);

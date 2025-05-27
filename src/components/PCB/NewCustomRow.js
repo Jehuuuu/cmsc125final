@@ -2,7 +2,7 @@
 import { Modal, Table } from "react-bootstrap";
 
 // Importing functions for data manipulation
-import { addRow, getLastRowID, getProcessID } from "../data-funcs";
+import { addRow, getLastRowID, getProcessID, getRows, filterRows, editRow, deleteRow, getSum } from "../data-funcs";
 
 // Importing useEffect and useState hooks from React
 import { useEffect, useState } from "react";
@@ -15,19 +15,40 @@ export default function NewCustomRow(props) {
     
     // Asynchronous function to initialize row data
     async function initialData() {
-        // Get the next process ID
-        const id = Number(await getProcessID()) + 1;
-        // Set initial row data
-        setRow({
-            process_id: id.toString(),
-            burst_time: 0,
-            memory_size: 0,
-            arrival_time: props.time,
-            priority: 0,
-            status: "Ready",
-            waiting_time: '-',
-            steps: 0
-        })
+        try {
+            // Get the current highest ID from both PCB and queue to ensure uniqueness
+            let currentId = Number(await getLastRowID("pcb")) || 0;
+            const queueId = Number(await getLastRowID("queue")) || 0;
+            
+            // Use the higher of the two IDs and increment by 1
+            const nextId = Math.max(currentId, queueId) + 1;
+            
+            // Set initial row data
+            setRow({
+                process_id: nextId.toString(),
+                burst_time: 0,
+                memory_size: 0,
+                arrival_time: props.time,
+                priority: 1, // Default priority to 1 instead of 0
+                status: "Ready",
+                waiting_time: 0, // Set to 0 instead of '-'
+                steps: 0
+            })
+        } catch (error) {
+            console.error('Error initializing process data:', error);
+            // Fallback to a timestamp-based ID if database queries fail
+            const fallbackId = Date.now().toString().slice(-6);
+            setRow({
+                process_id: fallbackId,
+                burst_time: 0,
+                memory_size: 0,
+                arrival_time: props.time,
+                priority: 1,
+                status: "Ready",
+                waiting_time: 0,
+                steps: 0
+            })
+        }
     }
 
     // useEffect hook to initialize row data when the component is mounted or props.show change
@@ -55,15 +76,123 @@ export default function NewCustomRow(props) {
             return;
         }
 
-        row.waiting_time = 0;   // Set initial waiting time
-        row.init_burst = row.burst_time;    // Set initial burst time
-        row.io_when = Math.floor(Math.random() * (row.burst_time - 1)) + 1;  // Set random io event
-        row.io_time = Math.floor(Math.random() * 10) + 1;   // Set random io time
+        try {
+            // Get a fresh unique ID right before adding to prevent race conditions
+            let currentId = Number(await getLastRowID("pcb")) || 0;
+            const queueId = Number(await getLastRowID("queue")) || 0;
+            const freshId = Math.max(currentId, queueId) + 1;
 
-        // Add the row to the "queue"
-        await addRow(row, "queue");
-        // Hide the modal
-        props.hide();
+            // Create the final row with fresh ID and validated data
+            const finalRow = {
+                ...row,
+                process_id: freshId.toString(),
+                waiting_time: 0,   // Set initial waiting time
+                init_burst: parseInt(row.burst_time),    // Set initial burst time
+                burst_time: parseInt(row.burst_time),    // Ensure it's a number
+                memory_size: parseInt(row.memory_size),  // Ensure it's a number
+                priority: parseInt(row.priority),        // Ensure it's a number
+                io_when: Math.floor(Math.random() * (parseInt(row.burst_time) - 1)) + 1,  // Set random io event
+                io_time: Math.floor(Math.random() * 10) + 1,   // Set random io time
+                io_completed: false // Track if I/O event has been triggered
+            };
+
+            // Add the row to the "queue"
+            await addRow(finalRow, "queue");
+            
+            // Immediately process the job queue to move process to PCB if memory is available
+            await processJobQueueImmediately();
+            
+            // Show success message
+            alert(`Process ${freshId} added successfully!`);
+            
+            // Hide the modal
+            props.hide();
+            
+        } catch (error) {
+            console.error('Error adding custom process:', error);
+            alert('Error adding process. Please try again.');
+        }
+    }
+
+    // Function to immediately process job queue (same as in header.js)
+    async function processJobQueueImmediately() {
+        try {
+            function isEmptyObject(obj) {
+                return Object.keys(obj).length === 0 && obj.constructor === Object;
+            }
+
+            // get jobQueues
+            var queue = await getRows("queue")
+            
+            var i = 0;
+            // for each queue, search memory space to
+            while (i < queue.length) {
+              const memory = await filterRows("status", "Free", "memory")
+              var job = queue[i]
+              var smallestFragmentation = {}
+                for (var idx = 0; idx < memory.length; idx++){
+                  var currMemory = memory[idx]
+                  if (isEmptyObject(smallestFragmentation) && currMemory.splittable && currMemory.block_size >= job.memory_size) {
+                    // Split the segment
+                    if (parseInt(currMemory.block_size) - parseInt(job.memory_size) > 0) {
+                      var remainingSegment = {
+                        process_id: "",
+                        job_size: "",
+                        row_id: "",
+                        status: "Free",
+                        Fragmentation: "None",
+                        block_size: parseInt(currMemory.block_size) - parseInt(job.memory_size),
+                        splittable: true
+                      }
+                      // add to memory and pcb, delete it from queue
+                        await addRow(remainingSegment, "memory")
+                    }
+                    
+                    // Create another segment
+                    var segment = {
+                      id: currMemory.id,
+                      block_size: parseInt(job.memory_size),              
+                      process_id: job.process_id,
+                      row_id: job.id,
+                      job_size: parseInt(job.memory_size),
+                      status: "Busy",
+                      fragmentation: 0,
+                      splittable: false
+                    }
+                    await addRow(job, "pcb")
+                    await deleteRow(job.id, "queue")
+                    await editRow(segment, "memory")
+                    queue = await getRows("queue");
+                    i--
+
+                    break;
+                  } else if(currMemory.block_size >= job.memory_size) {
+                    var fragmentation = memory[idx].block_size - job.memory_size
+                    if(isEmptyObject(smallestFragmentation) || fragmentation < smallestFragmentation.fragmentation) {
+                      smallestFragmentation = memory[idx]
+                      smallestFragmentation.fragmentation = fragmentation
+                      smallestFragmentation.process_id = job.process_id
+                      smallestFragmentation.row_id = job.id
+                      smallestFragmentation.job_size = job.memory_size
+                      smallestFragmentation.status = "Busy"
+                    } else {
+                      continue
+                    }
+                  }
+                }
+                if (!isEmptyObject(smallestFragmentation)) {
+                  await editRow(smallestFragmentation, "memory")
+                  await addRow(job, "pcb")
+                  await deleteRow(job.id, "queue")
+                  queue = await getRows("queue");
+                  i--
+                }
+
+                i++
+            }
+        } catch (error) {
+            console.error('Error processing job queue:', error);
+        }
     }
 
     // Function to handle input change

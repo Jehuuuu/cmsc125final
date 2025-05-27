@@ -522,3 +522,555 @@
 .confirm-switch button#No:hover {
     background-color: whitesmoke;
 }
+
+/* Enhanced PCB Styles */
+
+/* Process Statistics */
+.process-stats {
+    display: flex;
+    gap: 8px;
+    margin: 0 20px;
+    flex-wrap: wrap;
+}
+
+.stat-badge {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+/* Control buttons */
+.control-buttons {
+    margin-right: 15px;
+}
+
+.control-buttons .btn {
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+/* Enhanced PCB Row Styles */
+.pcb-row {
+    transition: all 0.3s ease;
+    border-radius: 4px;
+    margin: 2px 0;
+    position: relative;
+}
+
+.pcb-row:hover {
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.pcb-row.running {
+    border-left: 4px solid #28a745;
+    background-color: #d4edda;
+}
+
+.pcb-row.ready {
+    border-left: 4px solid #ffc107;
+}
+
+.pcb-row.waiting {
+    border-left: 4px solid #dc3545;
+}
+
+.pcb-row.terminated {
+    border-left: 4px solid #6c757d;
+    opacity: 0.7;
+}
+
+/* Process ID Cell */
+.process-id-cell {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+    color: #007bff;
+}
+
+.process-id-cell:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+.info-icon-small {
+    font-size: 14px;
+    opacity: 0.6;
+}
+
+/* Burst Time Cell with Progress */
+.burst-time-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.burst-time-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.burst-time-text {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.burst-progress {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.burst-progress .progress {
+    height: 4px;
+    width: 80%;
+    border-radius: 2px;
+}
+
+.progress-text {
+    font-size: 0.7rem;
+    color: #6c757d;
+}
+
+/* Priority Cell */
+.priority-cell {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+}
+
+.priority-high {
+    color: #dc3545;
+}
+
+.priority-medium {
+    color: #ffc107;
+}
+
+.priority-low {
+    color: #28a745;
+}
+
+.priority-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.priority-high .priority-indicator {
+    background-color: #dc3545;
+}
+
+.priority-medium .priority-indicator {
+    background-color: #ffc107;
+}
+
+.priority-low .priority-indicator {
+    background-color: #28a745;
+}
+
+/* Status Cell */
+.status-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.status-icon {
+    font-size: 16px;
+}
+
+.status-icon.running {
+    color: #28a745;
+    animation: pulse 2s infinite;
+}
+
+.status-icon.ready {
+    color: #ffc107;
+}
+
+.status-icon.waiting {
+    color: #dc3545;
+    animation: blink 1s infinite;
+}
+
+.status-icon.terminated {
+    color: #6c757d;
+}
+
+/* Status animations */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
+/* Waiting Time Cell */
+.waiting-time-cell {
+    font-weight: 500;
+    color: #495057;
+}
+
+/* I/O Time Cell */
+.io-time-cell {
+    position: relative;
+}
+
+.io-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.io-indicator {
+    width: 6px;
+    height: 6px;
+    background-color: #dc3545;
+    border-radius: 50%;
+    animation: pulse 1s infinite;
+}
+
+/* Enhanced Delete Icon */
+.delete-icon {
+    cursor: pointer;
+    border-radius: 50%;
+    padding: 4px;
+    transition: all 0.2s ease;
+    color: #6c757d;
+}
+
+.delete-icon:hover {
+    background-color: #dc3545;
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Process Details Modal */
+.process-details {
+    font-size: 0.9rem;
+}
+
+.process-details h6 {
+    color: #007bff;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+}
+
+.process-details .table td {
+    padding: 4px 8px;
+    border: none;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.process-details .table td:first-child {
+    width: 40%;
+    color: #6c757d;
+}
+
+/* Status and Priority Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-badge.running {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-badge.ready {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.waiting {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.status-badge.terminated {
+    background-color: #e2e3e5;
+    color: #383d41;
+}
+
+.priority-badge {
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.priority-badge.priority-high {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.priority-badge.priority-medium {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.priority-badge.priority-low {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+/* Enhanced PCB Table */
+.pcb-table {
+    height: 200px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background-color: white;
+}
+
+.pcb-table::-webkit-scrollbar {
+    width: 6px;
+}
+
+.pcb-table::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.pcb-table::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.pcb-table::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Enhanced PCB Header */
+.pcb-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px 8px 0 0;
+    padding: 15px 20px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.title-contain {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.title-contain h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .process-stats {
+        margin: 10px 0;
+    }
+    
+    .stat-badge {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+    }
+    
+    .pcb-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+    
+    .title-contain {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .btn-cont {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+/* Tooltip Enhancements */
+.tooltip {
+    font-size: 0.8rem;
+}
+
+.tooltip-inner {
+    background-color: #343a40;
+    border-radius: 4px;
+    padding: 6px 10px;
+}
+
+/* Modal Enhancements */
+.modal-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border-radius: 8px 8px 0 0;
+}
+
+.modal-header .btn-close {
+    filter: invert(1);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+    padding: 15px 20px;
+}
+
+/* Button Enhancements */
+.btn-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,123,255,0.3);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220,53,69,0.3);
+}
+
+/* Enhanced Table Header Styles */
+.enhanced-header {
+    background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+    color: white;
+    font-weight: 600;
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.header-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 12px 8px;
+    font-size: 0.85rem;
+    position: relative;
+    text-align: center;
+}
+
+.header-icon {
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+.sortable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+}
+
+.sortable:hover {
+    background-color: rgba(255,255,255,0.1);
+    transform: translateY(-1px);
+}
+
+.sort-icon {
+    font-size: 14px;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.sortable:hover .sort-icon {
+    opacity: 1;
+}
+
+.disabled-header {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.disabled-indicator {
+    font-size: 10px;
+    opacity: 0.5;
+}
+
+/* Status Legend */
+.status-legend {
+    display: flex;
+    gap: 2px;
+    margin-top: 2px;
+    justify-content: center;
+}
+
+.legend-item {
+    font-size: 10px;
+    opacity: 0.8;
+}
+
+.legend-item.running {
+    color: #28a745;
+}
+
+.legend-item.ready {
+    color: #ffc107;
+}
+
+.legend-item.waiting {
+    color: #dc3545;
+}
+
+.legend-item.terminated {
+    color: #6c757d;
+}
+
+/* Override existing PCB table header styles */
+.pcb-table-header.enhanced-header {
+    padding: 0;
+    font-weight: 600;
+}
+
+.pcb-table-header.enhanced-header .pcb-table-cell {
+    border-right: 1px solid rgba(255,255,255,0.1);
+}
+
+.pcb-table-header.enhanced-header .pcb-table-cell:last-child {
+    border-right: none;
+}

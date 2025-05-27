@@ -212,9 +212,12 @@ export default function Main() {
                 // decrement io time per interval
                 changeIOTime();
 
+                // Process job queue to move processes from queue to PCB
+                await checkJobQueue();
+
               setTime(time => time + 1)
               
-            }, 3000);
+            }, 2000);
         } else {
             // Clear interval when simulation is not running
             if (intervalRef.current) {
@@ -229,7 +232,7 @@ export default function Main() {
                 clearInterval(intervalRef.current);
             }
         };
-    }, [isSimulationRunning, selectedPolicy]); 
+    }, [isSimulationRunning, selectedPolicy]);
 
     // io calculations
     useEffect(() => {
@@ -238,9 +241,12 @@ export default function Main() {
             var row = running[0] ? running[0] : "";
             
             if(row !== "") {
-                if(row.burst_time === row.io_when) {
+                // Only trigger I/O event if process is running and hasn't completed I/O yet
+                // Check if burst_time equals io_when AND the process hasn't had its I/O event yet
+                if(row.burst_time === row.io_when && row.status === "Running" && !row.io_completed) {
                     row.status = "Waiting";
                     row.steps = row.init_burst - row.io_when;
+                    row.io_completed = true; // Mark that I/O event has been triggered
                     await editRow(row, "pcb");
                 }
             }
