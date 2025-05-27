@@ -92,7 +92,8 @@ export default function NewCustomRow(props) {
                 memory_size: parseInt(row.memory_size),  // Ensure it's a number
                 priority: parseInt(row.priority),        // Ensure it's a number
                 io_when: Math.floor(Math.random() * (parseInt(row.burst_time) - 1)) + 1,  // Set random io event
-                io_time: Math.floor(Math.random() * 10) + 1   // Set random io time
+                io_time: Math.floor(Math.random() * 10) + 1,   // Set random io time
+                io_completed: false // Track if I/O event has been triggered
             };
 
             // Add the row to the "queue"

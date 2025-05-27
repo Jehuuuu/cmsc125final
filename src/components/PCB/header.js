@@ -101,6 +101,7 @@ export default function Header(props) {
                 finalRow.init_burst = finalRow.burst_time;
                 finalRow.io_when = Math.floor(Math.random() * (finalRow.burst_time - 2)) + 2;
                 finalRow.io_time = Math.floor(Math.random() * 10) + 1;
+                finalRow.io_completed = false; // Track if I/O event has been triggered
 
                 // Add the new row to the "queue"
                 await addRow(finalRow, "queue");
@@ -408,6 +409,7 @@ export default function Header(props) {
                 finalRow.init_burst = finalRow.burst_time;
                 finalRow.io_when = Math.floor(Math.random() * (finalRow.burst_time - 2)) + 2;
                 finalRow.io_time = Math.floor(Math.random() * 10) + 1;
+                finalRow.io_completed = false; // Track if I/O event has been triggered
 
                 // Add the row to the "queue" and wait for completion
                 await addRow(finalRow, "queue");
