@@ -34,9 +34,9 @@ const changeStatus = async () => {
             // Changing the status of the process with the highest priority to running
             rows[0].status = "Running";
     
-            // Decrementing the burst time of the process
-            rows[0].burst_time -= 1;
-            rows[0].steps += 1;
+            // Don't decrement burst time here - it should only be decremented during execution
+            // Reset steps when starting a new process
+            rows[0].steps = 0;
     
             // Pushing the changes to the process
             await pushChanges(rows[0]);
@@ -88,9 +88,12 @@ export const Priority = async () => {
         } else {
             // Deleting the process if the burst time is 0
             deleteDoneProcess(running[0]);
+            // Only change status when current process is done
+            changeStatus();
+            return;
         }
 
-        // Changing the status of the process
+        // Check if a higher priority process has arrived (preemptive)
         changeStatus();
 
         // Finishing the cycle

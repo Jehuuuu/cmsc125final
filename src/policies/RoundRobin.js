@@ -37,10 +37,9 @@ const changeProcess = async (current) => {
   if(rows.length > 0) {
     // Changing the status of the first ready process to running
     rows[0].status = "Running";
-    // Decrementing the burst time of the process
-    rows[0].burst_time -= 1;
-    // Incrementing the steps of the process
-    rows[0].steps += 1;
+    // Don't decrement burst time here - it should only be decremented during execution
+    // Reset steps when starting a new process
+    rows[0].steps = 0;
 
     // Pushing the changes to the process
     pushChanges(rows[0]);

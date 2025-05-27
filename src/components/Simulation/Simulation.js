@@ -60,8 +60,8 @@ export default function Simulation(props) {
                     } else {
                         // update last index steps
                         // if policy is preemptive
-                        if (location.state.policy !== "First Come, First Serve"
-                            && location.state.policy !== "Round Robin") {
+                        if (location.state?.policy !== "First Come, First Serve"
+                            && location.state?.policy !== "Round Robin") {
                             const lastOne = rows.find(item => item.id === newArr[lastIndex].id);
     
                             if(lastOne?.status === "Ready") {

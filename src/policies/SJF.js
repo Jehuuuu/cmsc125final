@@ -22,15 +22,20 @@ const getShortestBurstProcess = async () => {
 }   
 
 // Defining an async function to update a process
-const updateProcess = async (process, newStatus, newBurstTime) => {
+const updateProcess = async (process, newStatus, newBurstTime, incrementSteps = true) => {
     // Checking if the process exists
     if(process){
         // Updating the status of the process
         process.status = newStatus;
         // Updating the burst time of the process
         process.burst_time = newBurstTime;
-        // Incrementing the steps of the process
-        process.steps += 1;
+        // Incrementing the steps of the process only if specified
+        if (incrementSteps) {
+            process.steps += 1;
+        } else {
+            // Reset steps when starting a new process
+            process.steps = 0;
+        }
 
         // Pushing the changes to the process
         await editRow(process, "pcb");
@@ -56,13 +61,13 @@ const changeStatus = async () => {
                 await deleteRow(runningProcess[0].id, "pcb");
             } else {
                 // Changing the status of the process to ready if the burst time is not 0
-                await updateProcess(runningProcess[0], "Ready", runningProcess[0].burst_time);
+                await updateProcess(runningProcess[0], "Ready", runningProcess[0].burst_time, false);
                 await editRow(runningProcess[0], "pcb")
             }
         }
 
-        // Changing the status of the process with the shortest burst time to running and decrementing its burst time
-        await updateProcess(shortestBurstProcess, "Running", shortestBurstProcess.burst_time - 1);
+        // Changing the status of the process with the shortest burst time to running WITHOUT decrementing burst time
+        await updateProcess(shortestBurstProcess, "Running", shortestBurstProcess.burst_time, false);
         await editRow(shortestBurstProcess, "pcb")
     }
 }
@@ -96,10 +101,12 @@ export const SJF = async () => {
         else{  
             // Deleting the process if the burst time is 0
             await deleteRow(running[0].id, "pcb");
+            // Only change status when current process is done
+            changeStatus();
         }
-    } 
-        
-    // Changing the status of the process
-    changeStatus();
+    } else {
+        // Only change status when there's no running process
+        changeStatus();
+    }
 
 }

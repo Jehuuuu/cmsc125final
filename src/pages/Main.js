@@ -212,9 +212,12 @@ export default function Main() {
                 // decrement io time per interval
                 changeIOTime();
 
+                // Process job queue to move processes from queue to PCB
+                await checkJobQueue();
+
               setTime(time => time + 1)
               
-            }, 3000);
+            }, 2000);
         } else {
             // Clear interval when simulation is not running
             if (intervalRef.current) {
@@ -229,7 +232,7 @@ export default function Main() {
                 clearInterval(intervalRef.current);
             }
         };
-    }, [isSimulationRunning, selectedPolicy]); 
+    }, [isSimulationRunning, selectedPolicy]);
 
     // io calculations
     useEffect(() => {
