@@ -6,6 +6,7 @@ import Menubar from '../components/ide/Menubar';
 import Toolbar from '../components/ide/Toolbar';
 import Tabbar from '../components/ide/Tabbar';
 import VoiceCommands from '../components/ide/VoiceCommands';
+import IDEVoiceGuide from '../components/ide/VoiceGuide';
 import WelcomeScreen from '../components/ide/WelcomeScreen';
 import HeaderImg from '../images/ide/header.png';
 import { LOCAL_STORAGE_KEYS, getLocalStorageItem, setLocalStorageItem } from '../utils/ideUtils';
@@ -13,6 +14,7 @@ import { TabProvider } from '../utils/TabContext';
 import { EditorProvider } from '../utils/EditorContext';
 import { useNavigate } from 'react-router-dom';
 import Tooltip from '@mui/material/Tooltip';
+import { Toaster } from 'react-hot-toast';
 
 /**
  * 
@@ -84,6 +86,9 @@ function IDE() {
 
         {/* guide */}
         <Guide />
+        
+        {/* Voice Commands Guide */}
+        <IDEVoiceGuide />
       </div>
 
         {/* holds the right components of the screen */}
@@ -103,6 +108,34 @@ function IDE() {
           <VoiceCommands />
         </div>
     </div>
+    
+    {/* Toast notifications for voice command feedback */}
+    <Toaster
+      position="top-right"
+      toastOptions={{
+        duration: 3000,
+        style: {
+          background: '#FEFAE0',
+          color: '#552C08',
+          border: '2px solid #DDA15E',
+          borderRadius: '12px',
+          fontFamily: 'Poppins, sans-serif',
+          fontWeight: '500'
+        },
+        success: {
+          style: {
+            background: 'linear-gradient(135deg, #ECD9B9 0%, #DDBB99 100%)',
+            border: '2px solid #C19A6B'
+          }
+        },
+        error: {
+          style: {
+            background: 'linear-gradient(135deg, #FEFAE0 0%, #ECD9B9 100%)',
+            border: '2px solid #AC9B85'
+          }
+        }
+      }}
+    />
       </TabProvider>
     </EditorProvider>
   );

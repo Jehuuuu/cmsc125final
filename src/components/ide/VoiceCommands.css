@@ -1,0 +1,453 @@
+/* Enhanced Voice Commands Container */
+.voice-commands-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Enhanced Speech Transcript Indicator */
+.speech-indicator {
+    position: absolute;
+    bottom: 120px;
+    right: 0;
+    background: linear-gradient(135deg, #FEFAE0 0%, #ECD9B9 100%);
+    border: 2px solid #DDA15E;
+    border-radius: 16px;
+    padding: 16px;
+    min-width: 300px;
+    max-width: 420px;
+    box-shadow: 0 8px 32px rgba(85, 44, 8, 0.15);
+    backdrop-filter: blur(10px);
+    pointer-events: auto;
+    animation: slideInUp 0.3s ease-out;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+}
+
+.speech-indicator.listening {
+    border-color: #C19A6B;
+    background: linear-gradient(135deg, #FEFAE0 0%, #DDBB99 100%);
+}
+
+.speech-indicator.command-mode {
+    border-color: #552C08;
+    background: linear-gradient(135deg, #ECD9B9 0%, #DDA15E 100%);
+    box-shadow: 0 8px 32px rgba(85, 44, 8, 0.25);
+}
+
+.speech-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    color: #552C08;
+}
+
+.speech-icon {
+    margin-right: 8px;
+    font-size: 18px;
+}
+
+.speech-label {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.speech-content {
+    background: rgba(85, 44, 8, 0.05);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #552C08;
+    border-left: 3px solid #DDA15E;
+    margin-bottom: 8px;
+    word-wrap: break-word;
+    font-weight: 500;
+}
+
+.speech-status {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: #C19A6B;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+.speech-confidence {
+    font-size: 11px;
+    color: #AC9B85;
+    font-style: italic;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.status-dot.active {
+    background: #C19A6B;
+    animation: pulse 1.5s infinite;
+}
+
+/* Enhanced Microphone Status Indicator */
+.mic-status-indicator {
+    position: absolute;
+    bottom: 4px;
+    right: 101px;
+    background: rgba(254, 250, 224, 0.95);
+    border: 2px solid #DDA15E;
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 16px rgba(85, 44, 8, 0.1);
+    backdrop-filter: blur(10px);
+    pointer-events: auto;
+    transition: all 0.3s ease;
+    animation: slideInLeft 0.3s ease-out;
+    font-family: 'Poppins', sans-serif;
+}
+
+.mic-status-indicator.active {
+    border-color: #C19A6B;
+    background: rgba(236, 217, 185, 0.95);
+}
+
+.mic-status-indicator.inactive {
+    border-color: #AC9B85;
+    background: rgba(232, 216, 196, 0.95);
+}
+
+.mic-status-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-icon {
+    font-size: 18px;
+}
+
+.status-icon.listening {
+    color: #C19A6B;
+    animation: pulse 2s infinite;
+}
+
+.status-icon.muted {
+    color: #AC9B85;
+}
+
+.status-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: #552C08;
+}
+
+/* Enhanced Listening Animation Waves */
+.listening-animation {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.wave {
+    width: 3px;
+    height: 12px;
+    background: #C19A6B;
+    border-radius: 2px;
+    animation: wave 1.5s infinite ease-in-out;
+}
+
+.wave1 {
+    animation-delay: 0s;
+}
+
+.wave2 {
+    animation-delay: 0.2s;
+}
+
+.wave3 {
+    animation-delay: 0.4s;
+}
+
+/* Enhanced Main Microphone Button Container */
+.mic-button-container {
+    position: relative;
+    pointer-events: auto;
+}
+
+/* Enhanced Main Microphone Button */
+.mic {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: 3px solid #DDA15E;
+    background: linear-gradient(135deg, #FEFAE0 0%, #ECD9B9 100%);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(85, 44, 8, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.mic:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(85, 44, 8, 0.15);
+}
+
+.mic.active {
+    border-color: #C19A6B;
+    background: linear-gradient(135deg, #ECD9B9 0%, #DDBB99 100%);
+    animation: micPulse 2s infinite;
+}
+
+.mic.listening {
+    border-color: #552C08;
+    background: linear-gradient(135deg, #DDA15E 0%, #C19A6B 100%);
+}
+
+.mic svg {
+    font-size: 28px;
+    color: #552C08;
+    transition: color 0.3s ease;
+}
+
+.mic.active svg {
+    color: #C19A6B;
+}
+
+.mic.listening svg {
+    color: #552C08;
+}
+
+/* Enhanced Command Mode Badge */
+.command-mode-badge {
+    position: absolute;
+    top: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #552C08;
+    color: #FEFAE0;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(85, 44, 8, 0.3);
+    animation: slideInDown 0.3s ease-out;
+    font-family: 'Poppins', sans-serif;
+}
+
+.pulse-dot {
+    width: 6px;
+    height: 6px;
+    background: #FEFAE0;
+    border-radius: 50%;
+    animation: pulse 1s infinite;
+}
+
+/* Command History Badge */
+.command-history-badge {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    background: #DDA15E;
+    color: #552C08;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(85, 44, 8, 0.2);
+    animation: slideInDown 0.3s ease-out;
+    font-family: 'Poppins', sans-serif;
+}
+
+.history-count {
+    line-height: 1;
+}
+
+/* Quick Help Tooltip */
+.quick-help {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(85, 44, 8, 0.9);
+    color: #FEFAE0;
+    padding: 6px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    white-space: nowrap;
+    animation: fadeInUp 0.3s ease-out;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Enhanced Error State */
+.voice-error {
+    background: #FEFAE0;
+    border: 2px solid #AC9B85;
+    border-radius: 12px;
+    padding: 16px;
+    color: #552C08;
+    font-weight: 500;
+    text-align: center;
+    pointer-events: auto;
+    font-family: 'Poppins', sans-serif;
+}
+
+.voice-error small {
+    display: block;
+    margin-top: 8px;
+    color: #AC9B85;
+    font-size: 12px;
+}
+
+/* Enhanced Animations */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+@keyframes micPulse {
+    0%, 100% {
+        box-shadow: 0 4px 16px rgba(85, 44, 8, 0.1), 0 0 0 0 rgba(193, 154, 107, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 16px rgba(85, 44, 8, 0.1), 0 0 0 10px rgba(193, 154, 107, 0);
+    }
+}
+
+@keyframes wave {
+    0%, 100% {
+        height: 8px;
+    }
+    50% {
+        height: 16px;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .voice-commands-container {
+        bottom: 15px;
+        right: 15px;
+    }
+    
+    .speech-indicator {
+        min-width: 250px;
+        max-width: 300px;
+        bottom: 100px;
+    }
+    
+    .mic-status-indicator {
+        bottom: 100px;
+        right: 270px;
+        padding: 10px 12px;
+    }
+    
+    .mic {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .mic svg {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .mic-status-indicator {
+        display: none; /* Hide on very small screens to save space */
+    }
+    
+    .speech-indicator {
+        right: -10px;
+        min-width: 200px;
+        max-width: 250px;
+    }
+    
+    .quick-help {
+        font-size: 9px;
+        padding: 4px 8px;
+    }
+}
+
+/* Integration with existing IDE styles */
+.voice-commands-container .mic {
+    font-family: 'Poppins', sans-serif;
+}
+
+.voice-commands-container * {
+    box-sizing: border-box;
+}
+
+/* Ensure voice commands don't interfere with IDE layout */
+.ide-container .voice-commands-container {
+    position: fixed;
+    z-index: 9999;
+} 
